@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Reader - Camera Capture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .camera-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .camera-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .video-container {
+            position: relative;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #videoElement {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 10px;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(86, 171, 47, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .capture-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .capture-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .capture-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .capture-info li {
+            padding: 5px 0;
+            color: #1565c0;
+        }
+
+        .ocr-info {
+            background: #f3e5f5;
+            border: 1px solid #9c27b0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .ocr-info h3 {
+            color: #7b1fa2;
+            margin-bottom: 10px;
+        }
+
+        .ocr-status {
+            font-size: 0.9em;
+        }
+
+        .ocr-system-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1bee7;
+        }
+
+        .ocr-system-item:last-child {
+            border-bottom: none;
+        }
+
+        .ocr-system-name {
+            font-weight: 600;
+            color: #4a148c;
+        }
+
+        .ocr-system-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .ocr-system-available {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .ocr-system-unavailable {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .ocr-system-fallback {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+
+
+        .files-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .files-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8em;
+            border-radius: 15px;
+        }
+
+        .file-details {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .file-status {
+            display: flex;
+            gap: 10px;
+            font-size: 0.8em;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .status-text {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status-audio {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-ocr {
+            background: #e8f4fd;
+            color: #1976d2;
+        }
+
+        .status-missing {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .ocr-results-section {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .ocr-results-section h2 {
+            color: #2e7d32;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .ocr-results-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .ocr-image-preview {
+            flex: 0 0 auto;
+        }
+
+        .ocr-image-preview img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 2px solid #4caf50;
+        }
+
+        .ocr-text-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ocr-header {
+            border-bottom: 2px solid #c8e6c9;
+            padding-bottom: 10px;
+        }
+
+        .ocr-header h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .ocr-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .ocr-meta span {
+            background: #f1f8e9;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-family: monospace;
+        }
+
+        .ocr-text-display {
+            background: white;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .no-ocr-text {
+            color: #999;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .ocr-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .ocr-results-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .ocr-image-preview img {
+                max-width: 100%;
+                max-height: 200px;
+            }
+            
+            .ocr-meta {
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .ocr-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        .last-capture-section {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .last-capture-section h2 {
+            color: #f57c00;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .last-capture-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .last-capture-image {
+            flex: 0 0 auto;
+        }
+
+        .last-capture-image img {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 2px solid #ffb74d;
+        }
+
+        .last-capture-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .capture-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #ffe0b2;
+        }
+
+        .capture-details:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #f57c00;
+            min-width: 120px;
+        }
+
+        .capture-details span:last-child {
+            color: #333;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            .last-capture-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .last-capture-image img {
+                max-width: 100%;
+                max-height: 250px;
+            }
+            
+            .capture-details {
+                justify-content: center;
+            }
+        }
+
+        .ocr-results-section {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .ocr-results-section h2 {
+            color: #1976d2;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .ocr-results-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .ocr-image-preview {
+            flex: 0 0 auto;
+        }
+
+        .ocr-image-preview img {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 2px solid #2196f3;
+        }
+
+        .ocr-text-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ocr-header h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .ocr-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+        }
+
+        .ocr-meta span {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .ocr-text-display {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .no-ocr-text {
+            color: #666;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .ocr-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #4caf50;
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
+        .notification.info {
+            background: #2196f3;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .camera-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Story Reader</h1>
+            <p>Capture book pages and convert them to text and audio</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Camera Section -->
+            <div class="camera-section">
+                <h2>📷 Camera Capture</h2>
+                
+
+
+                <div class="ocr-info" id="ocrInfo">
+                    <h3>🔍 OCR System Status</h3>
+                    <div class="ocr-status">
+                        <div class="loading" id="ocrLoading">
+                            <div class="spinner"></div>
+                            <p>Checking OCR systems...</p>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="video-container">
+                    <img id="videoElement" alt="Camera feed will appear here">
+                </div>
+
+                <div class="camera-controls">
+                    <button id="startCamera" class="btn btn-primary">Start Camera</button>
+                    <button id="stopCamera" class="btn btn-danger" disabled>Stop Camera</button>
+                    <button id="captureBtn" class="btn btn-success" disabled>Capture</button>
+                    <button id="ocrBtn" class="btn btn-info" disabled onclick="performOcrOnLastCapture()">🔍 OCR Last Image</button>
+                </div>
+
+                <div class="loading" id="captureLoading">
+                    <div class="spinner"></div>
+                    <p>Processing...</p>
+                </div>
+            </div>
+
+            <!-- OCR Results Section -->
+            <div class="ocr-results-section" id="ocrResultsSection" style="display: none;">
+                <h2>📖 OCR Results</h2>
+                <div class="ocr-results-content">
+                    <div class="ocr-image-preview">
+                        <img id="ocrImagePreview" src="" alt="Image being processed">
+                    </div>
+                    <div class="ocr-text-content">
+                        <div class="ocr-header">
+                            <h3>Extracted Text</h3>
+                            <div class="ocr-meta">
+                                <span class="ocr-method" id="ocrMethod">Method: -</span>
+                                <span class="ocr-confidence" id="ocrConfidence">Confidence: -</span>
+                                <span class="ocr-time" id="ocrTime">Time: -</span>
+                            </div>
+                        </div>
+                        <div class="ocr-text-display" id="ocrTextDisplay">
+                            <p class="no-ocr-text">No OCR results yet. Click the OCR button on a captured image to extract text.</p>
+                        </div>
+                        <div class="ocr-actions">
+                            <button class="btn btn-primary" onclick="copyOcrText()">📋 Copy Text</button>
+                            <button class="btn btn-success" onclick="textToSpeech()">🔊 Text to Speech</button>
+                            <button class="btn btn-info" onclick="clearOcrResults()">🗑️ Clear Results</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OCR Results Section -->
+            <div class="ocr-results-section" id="ocrResultsSection" style="display: none;">
+                <h2>🔍 OCR Results</h2>
+                <div class="ocr-results-content">
+                    <div class="ocr-image-preview">
+                        <img id="ocrImagePreview" src="" alt="Image being processed">
+                    </div>
+                    <div class="ocr-text-content">
+                        <div class="ocr-header">
+                            <h3>Extracted Text</h3>
+                            <div class="ocr-meta">
+                                <span class="ocr-method" id="ocrMethod">Method: -</span>
+                                <span class="ocr-confidence" id="ocrConfidence">Confidence: -</span>
+                                <span class="ocr-time" id="ocrTime">Time: -</span>
+                            </div>
+                        </div>
+                        <div class="ocr-text-display" id="ocrTextDisplay">
+                            <p class="no-ocr-text">No OCR results yet. Click the OCR button to extract text from the last captured image.</p>
+                        </div>
+                        <div class="ocr-actions">
+                            <button class="btn btn-primary" onclick="copyOcrText()">📋 Copy Text</button>
+                            <button class="btn btn-success" onclick="textToSpeech()">🔊 Text to Speech</button>
+                            <button class="btn btn-info" onclick="clearOcrResults()">🗑️ Clear Results</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Files Section -->
+            <div class="files-section">
+                <h2>📁 Captured Files</h2>
+                <div class="file-list" id="fileList">
+                    <p style="text-align: center; color: #666; padding: 20px;">
+                        No files captured yet. Start the camera and capture some pages!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last Capture Section -->
+            <div class="last-capture-section" id="lastCaptureSection" style="display: none;">
+                <h2>📸 Last Captured Image</h2>
+                <div class="last-capture-content">
+                    <div class="last-capture-image">
+                        <img id="lastCaptureImage" src="" alt="Last captured image">
+                    </div>
+                    <div class="last-capture-info">
+                        <div class="capture-details">
+                            <span class="detail-label">📅 Date:</span>
+                            <span id="lastCaptureDate">-</span>
+                        </div>
+                        <div class="capture-details">
+                            <span class="detail-label">⏰ Time:</span>
+                            <span id="lastCaptureTime">-</span>
+                        </div>
+                        <div class="capture-details">
+                            <span class="detail-label">📏 Size:</span>
+                            <span id="lastCaptureImageSize">-</span>
+                        </div>
+                        <div class="capture-details">
+                            <span class="detail-label">🖼️ Dimensions:</span>
+                            <span id="lastCaptureDimensions">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Global variables
+        let cameraActive = false;
+        let captureInProgress = false;
+
+        // DOM elements
+        const videoElement = document.getElementById('videoElement');
+        const startCameraBtn = document.getElementById('startCamera');
+        const stopCameraBtn = document.getElementById('stopCamera');
+        const captureBtn = document.getElementById('captureBtn');
+        const captureLoading = document.getElementById('captureLoading');
+        const fileList = document.getElementById('fileList');
+        const notification = document.getElementById('notification');
+
+        // Event listeners
+        startCameraBtn.addEventListener('click', startCamera);
+        stopCameraBtn.addEventListener('click', stopCamera);
+        captureBtn.addEventListener('click', captureImage);
+        document.addEventListener('keydown', handleKeyPress);
+        videoElement.addEventListener('click', captureImage);
+
+        // Start camera
+        async function startCamera() {
+            try {
+                const response = await fetch('/api/camera/start', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    cameraActive = true;
+                    startCameraBtn.disabled = true;
+                    stopCameraBtn.disabled = false;
+                    captureBtn.disabled = false;
+                    
+                    // Start video stream
+                    videoElement.src = '/api/stream';
+                    showNotification('Camera started successfully!', 'success');
+                } else {
+                    showNotification('Failed to start camera: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error starting camera: ' + error.message, 'error');
+            }
+        }
+
+        // Stop camera
+        async function stopCamera() {
+            try {
+                const response = await fetch('/api/camera/stop', { method: 'POST' });
+                const data = await response.json();
+                
+                cameraActive = false;
+                startCameraBtn.disabled = false;
+                stopCameraBtn.disabled = true;
+                captureBtn.disabled = true;
+                
+                // Stop video stream
+                videoElement.src = '';
+                showNotification('Camera stopped', 'info');
+            } catch (error) {
+                showNotification('Error stopping camera: ' + error.message, 'error');
+            }
+        }
+
+        // Capture image
+        async function captureImage() {
+            if (!cameraActive || captureInProgress) return;
+            
+            captureInProgress = true;
+            captureLoading.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/capture', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Image captured: ' + data.filename, 'success');
+                    
+                    // Immediately update last capture display with new image info
+                    if (data.image_info) {
+                        const mockFile = {
+                            filename: data.filename,
+                            size: data.image_info.size_bytes,
+                            width: data.image_info.width,
+                            height: data.image_info.height,
+                            created: new Date().toISOString()
+                        };
+                        updateLastCaptureDisplay(mockFile);
+                    }
+                    
+                    await loadFiles(); // Refresh file list
+                } else {
+                    showNotification('Capture failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error capturing image: ' + error.message, 'error');
+            } finally {
+                captureInProgress = false;
+                captureLoading.style.display = 'none';
+            }
+        }
+
+        // Handle keyboard events
+        function handleKeyPress(event) {
+            if (event.code === 'Space' && cameraActive && !captureInProgress) {
+                event.preventDefault();
+                captureImage();
+            }
+        }
+
+        // Perform OCR on the last captured image
+        async function performOcrOnLastCapture() {
+            const lastCaptureImage = document.getElementById('lastCaptureImage');
+            if (!lastCaptureImage.src || lastCaptureImage.src === '') {
+                showNotification('No image available for OCR', 'error');
+                return;
+            }
+
+            try {
+                // Show OCR results section
+                const ocrResultsSection = document.getElementById('ocrResultsSection');
+                ocrResultsSection.style.display = 'block';
+
+                // Update OCR image preview
+                const ocrImagePreview = document.getElementById('ocrImagePreview');
+                ocrImagePreview.src = lastCaptureImage.src;
+
+                // Show loading state
+                const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+                ocrTextDisplay.innerHTML = '<div class="loading"><div class="spinner"></div><p>Processing OCR...</p></div>';
+
+                // Extract filename from image src
+                const imageSrc = lastCaptureImage.src;
+                const filename = imageSrc.split('/').pop();
+
+                // Call OCR API
+                const response = await fetch(`/api/ocr/${filename}`, { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update OCR metadata
+                    document.getElementById('ocrMethod').textContent = `Method: ${data.ocr_method === 'google_cloud_vision' ? '🔍 Google Vision' : '📖 Tesseract'}`;
+                    document.getElementById('ocrConfidence').textContent = `Confidence: ${data.confidence_score || 'High'}`;
+                    document.getElementById('ocrTime').textContent = `Time: ${data.processing_time}s`;
+
+                    // Display extracted text
+                    const extractedText = data.text || data.extracted_text || 'No text extracted';
+                    ocrTextDisplay.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${extractedText}</pre>`;
+
+                    showNotification('OCR completed successfully!', 'success');
+                } else {
+                    ocrTextDisplay.innerHTML = '<p style="color: #c62828;">OCR failed: ' + (data.error || 'Unknown error') + '</p>';
+                    showNotification('OCR failed: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+                ocrTextDisplay.innerHTML = '<p style="color: #c62828;">OCR error: ' + error.message + '</p>';
+                showNotification('OCR error: ' + error.message, 'error');
+            }
+        }
+
+        // Copy OCR text to clipboard
+        function copyOcrText() {
+            const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+            const text = ocrTextDisplay.textContent || ocrTextDisplay.innerText;
+            
+            if (text && text !== 'No OCR results yet. Click the OCR button to extract text from the last captured image.' && 
+                text !== 'No OCR results yet. Click the OCR button on a captured image to extract text.') {
+                navigator.clipboard.writeText(text).then(() => {
+                    showNotification('Text copied to clipboard!', 'success');
+                }).catch(() => {
+                    showNotification('Failed to copy text', 'error');
+                });
+            } else {
+                showNotification('No text to copy', 'error');
+            }
+        }
+
+        // Text to speech for OCR results
+        function textToSpeech() {
+            const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+            const text = ocrTextDisplay.textContent || ocrTextDisplay.innerText;
+            
+            if (text && text !== 'No OCR results yet. Click the OCR button to extract text from the last captured image.' && 
+                text !== 'No OCR results yet. Click the OCR button on a captured image to extract text.') {
+                // Use browser's built-in speech synthesis
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1;
+                    speechSynthesis.speak(utterance);
+                    showNotification('Text-to-speech started!', 'success');
+                } else {
+                    showNotification('Speech synthesis not supported in this browser', 'error');
+                }
+            } else {
+                showNotification('No text to speak', 'error');
+            }
+        }
+
+        // Clear OCR results
+        function clearOcrResults() {
+            const ocrResultsSection = document.getElementById('ocrResultsSection');
+            ocrResultsSection.style.display = 'none';
+            
+            // Reset OCR metadata
+            document.getElementById('ocrMethod').textContent = 'Method: -';
+            document.getElementById('ocrConfidence').textContent = 'Confidence: -';
+            document.getElementById('ocrTime').textContent = 'Time: -';
+            
+            showNotification('OCR results cleared', 'info');
+        }
+
+        // Load files
+        async function loadFiles() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                
+                if (data.files.length === 0) {
+                    fileList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No files captured yet. Start the camera and capture some pages!</p>';
+                    hideLastCapture();
+                    return;
+                }
+                
+                fileList.innerHTML = data.files.map(file => createFileItem(file)).join('');
+                
+                // Update last capture display with the most recent file
+                if (data.files.length > 0) {
+                    const lastFile = data.files[0]; // Files are sorted by creation time, newest first
+                    updateLastCaptureDisplay(lastFile);
+                }
+            } catch (error) {
+                showNotification('Error loading files: ' + error.message, 'error');
+            }
+        }
+
+        // Update last capture display
+        function updateLastCaptureDisplay(file) {
+            const lastCaptureSection = document.getElementById('lastCaptureSection');
+            const lastCaptureImage = document.getElementById('lastCaptureImage');
+            const lastCaptureDate = document.getElementById('lastCaptureDate');
+            const lastCaptureTime = document.getElementById('lastCaptureTime');
+            const lastCaptureImageSize = document.getElementById('lastCaptureImageSize');
+            const lastCaptureDimensions = document.getElementById('lastCaptureDimensions');
+            
+            // Show the section
+            lastCaptureSection.style.display = 'block';
+            
+            // Set image source
+            lastCaptureImage.src = `/api/files/${file.filename}`;
+            
+            // Parse filename to extract date and time
+            const filename = file.filename;
+            const match = filename.match(/(\d{8})_(\d{6})/);
+            
+            if (match) {
+                const dateStr = match[1];
+                const timeStr = match[2];
+                
+                // Format date (YYYYMMDD -> YYYY-MM-DD)
+                const formattedDate = `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
+                
+                // Format time (HHMMSS -> HH:MM:SS)
+                const formattedTime = `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:${timeStr.substring(4, 6)}`;
+                
+                lastCaptureDate.textContent = formattedDate;
+                lastCaptureTime.textContent = formattedTime;
+            } else {
+                lastCaptureDate.textContent = 'Unknown';
+                lastCaptureTime.textContent = 'Unknown';
+            }
+            
+            // Set file size
+            const fileSizeKB = (file.size / 1024).toFixed(1);
+            lastCaptureImageSize.textContent = `${fileSizeKB} KB`;
+            
+            // Set dimensions if available
+            if (file.width && file.height) {
+                lastCaptureDimensions.textContent = `${file.width} × ${file.height}`;
+            } else {
+                lastCaptureDimensions.textContent = 'Unknown';
+            }
+            
+            // Enable OCR button when image is available
+            const ocrBtn = document.getElementById('ocrBtn');
+            if (ocrBtn) {
+                ocrBtn.disabled = false;
+            }
+        }
+
+        // Hide last capture display
+        function hideLastCapture() {
+            const lastCaptureSection = document.getElementById('lastCaptureSection');
+            lastCaptureSection.style.display = 'none';
+            
+            // Disable OCR button when no image is available
+            const ocrBtn = document.getElementById('ocrBtn');
+            if (ocrBtn) {
+                ocrBtn.disabled = true;
+            }
+        }
+
+        // Create file item HTML
+        function createFileItem(file) {
+            const createdDate = new Date(file.created).toLocaleString();
+            const fileSize = (file.size / 1024).toFixed(1) + ' KB';
+            
+            // Get OCR method display name
+            const getOcrMethodDisplay = (method) => {
+                switch(method) {
+                    case 'google_cloud_vision': return '🔍 Google Vision';
+                            case 'failed': return '❌ Failed';
+        case 'not_configured': return '⚙️ Not Configured';
+                    default: return 'N/A';
+                }
+            };
+            
+            return `
+                <div class="file-item">
+                    <div class="file-header">
+                        <div class="file-name">${file.filename}</div>
+                        <div class="file-actions">
+                            <button class="btn btn-small btn-primary" onclick="performOCR('${file.filename}')">OCR</button>
+                            <button class="btn btn-small btn-success" onclick="performTTS('${file.filename}')">TTS</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteFile('${file.filename}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="file-details">
+                        Created: ${createdDate} | Size: ${fileSize}
+                    </div>
+                    <div class="file-status">
+                        <span class="status-badge ${file.has_text ? 'status-text' : 'status-missing'}">
+                            ${file.has_text ? '✓ Text' : '✗ No Text'}
+                        </span>
+                        <span class="status-badge status-ocr" title="OCR Method">
+                            ${getOcrMethodDisplay(file.ocr_method)}
+                        </span>
+                        <span class="status-badge ${file.has_audio ? 'status-audio' : 'status-missing'}">
+                            ${file.has_audio ? '✓ Audio' : '✗ No Audio'}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Perform OCR
+        async function performOCR(filename) {
+            try {
+                // Show loading state
+                const ocrResultsSection = document.getElementById('ocrResultsSection');
+                const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+                ocrTextDisplay.innerHTML = '<div class="loading"><div class="spinner"></div><p>Processing OCR...</p></div>';
+                ocrResultsSection.style.display = 'block';
+                
+                // Set image preview
+                const ocrImagePreview = document.getElementById('ocrImagePreview');
+                ocrImagePreview.src = `/api/files/${filename}`;
+                
+                const response = await fetch(`/api/ocr/${filename}`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const method = data.ocr_method === 'google_cloud_vision' ? '🔍 Google Vision' : '❌ Failed';
+                    const confidence = data.confidence_score === 'high' ? 'High' : 'Medium';
+                    const time = data.processing_time;
+                    
+                    // Update OCR metadata
+                    document.getElementById('ocrMethod').textContent = `Method: ${method}`;
+                    document.getElementById('ocrConfidence').textContent = `Confidence: ${confidence}`;
+                    document.getElementById('ocrTime').textContent = `Time: ${time}s`;
+                    
+                    // Display extracted text
+                    const extractedText = data.text || data.extracted_text;
+                    if (extractedText && extractedText.trim()) {
+                        ocrTextDisplay.innerHTML = `<pre>${extractedText}</pre>`;
+                    } else {
+                        ocrTextDisplay.innerHTML = '<p class="no-ocr-text">No text was extracted from this image.</p>';
+                    }
+                    
+                    showNotification(`OCR completed with ${method} (${confidence} confidence, ${time}s)`, 'success');
+                    await loadFiles(); // Refresh file list
+                } else {
+                    ocrTextDisplay.innerHTML = '<p class="no-ocr-text">OCR failed: ' + (data.error || 'Unknown error') + '</p>';
+                    showNotification('OCR failed: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+                ocrTextDisplay.innerHTML = '<p class="no-ocr-text">Error performing OCR: ' + error.message + '</p>';
+                showNotification('Error performing OCR: ' + error.message, 'error');
+            }
+        }
+
+        // Perform TTS
+        async function performTTS(filename) {
+            try {
+                const response = await fetch(`/api/tts/${filename}`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Text-to-speech completed!', 'success');
+                    await loadFiles(); // Refresh file list
+                } else {
+                    showNotification('TTS failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error performing TTS: ' + error.message, 'error');
+            }
+        }
+
+        // Delete file
+        async function deleteFile(filename) {
+            if (!confirm(`Are you sure you want to delete ${filename} and all associated files?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/files/${filename}`, { method: 'DELETE' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('File deleted successfully', 'success');
+                    await loadFiles(); // Refresh file list
+                } else {
+                    showNotification('Delete failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error deleting file: ' + error.message, 'error');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+
+
+
+
+        // Copy OCR text to clipboard
+        async function copyOcrText() {
+            const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+            const textContent = ocrTextDisplay.textContent || ocrTextDisplay.innerText;
+            
+            if (textContent && textContent !== 'No OCR results yet. Click the OCR button on a captured image to extract text.' && 
+                textContent !== 'No text was extracted from this image.' && !textContent.includes('Processing OCR...')) {
+                try {
+                    await navigator.clipboard.writeText(textContent);
+                    showNotification('Text copied to clipboard!', 'success');
+                } catch (error) {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textContent;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showNotification('Text copied to clipboard!', 'success');
+                }
+            } else {
+                showNotification('No text to copy', 'info');
+            }
+        }
+
+        // Convert OCR text to speech
+        async function textToSpeech() {
+            const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+            const textContent = ocrTextDisplay.textContent || ocrTextDisplay.innerText;
+            
+            if (textContent && textContent !== 'No OCR results yet. Click the OCR button on a captured image to extract text.' && 
+                textContent !== 'No text was extracted from this image.' && !textContent.includes('Processing OCR...')) {
+                try {
+                    // Use the existing TTS functionality
+                    const response = await fetch('/api/tts/text', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: textContent })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        showNotification('Text-to-speech completed!', 'success');
+                    } else {
+                        showNotification('TTS failed: ' + data.message, 'error');
+                    }
+                } catch (error) {
+                    showNotification('Error converting text to speech: ' + error.message, 'error');
+                }
+            } else {
+                showNotification('No text to convert to speech', 'info');
+            }
+        }
+
+        // Clear OCR results
+        function clearOcrResults() {
+            const ocrResultsSection = document.getElementById('ocrResultsSection');
+            const ocrTextDisplay = document.getElementById('ocrTextDisplay');
+            const ocrImagePreview = document.getElementById('ocrImagePreview');
+            
+            ocrTextDisplay.innerHTML = '<p class="no-ocr-text">No OCR results yet. Click the OCR button on a captured image to extract text.</p>';
+            ocrImagePreview.src = '';
+            document.getElementById('ocrMethod').textContent = 'Method: -';
+            document.getElementById('ocrConfidence').textContent = 'Confidence: -';
+            document.getElementById('ocrTime').textContent = 'Time: -';
+            
+            ocrResultsSection.style.display = 'none';
+            showNotification('OCR results cleared', 'info');
+        }
+
+        // Load OCR system information
+        async function loadOcrInfo() {
+            try {
+                const response = await fetch('/api/ocr/info');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const ocrStatus = document.getElementById('ocrInfo').querySelector('.ocr-status');
+                    ocrStatus.innerHTML = '';
+                    
+                    Object.entries(data.ocr_systems).forEach(([system, info]) => {
+                        const systemItem = document.createElement('div');
+                        systemItem.className = 'ocr-system-item';
+                        
+                        const systemName = document.createElement('div');
+                        systemName.className = 'ocr-system-name';
+                        systemName.textContent = system === 'google_cloud_vision' ? '🔍 Google Cloud Vision' : 'Unknown System';
+                        
+                        const systemStatus = document.createElement('div');
+                        systemStatus.className = 'ocr-system-status';
+                        
+                        if (info.available) {
+                            systemStatus.className += ' ocr-system-available';
+                            systemStatus.textContent = info.priority === 'primary' ? 'Primary' : 'Fallback';
+                        } else {
+                            systemStatus.className += ' ocr-system-unavailable';
+                            systemStatus.textContent = 'Unavailable';
+                        }
+                        
+                        systemItem.appendChild(systemName);
+                        systemItem.appendChild(systemStatus);
+                        ocrStatus.appendChild(systemItem);
+                    });
+                    
+                    // Add recommended method
+                    const recommendedDiv = document.createElement('div');
+                    recommendedDiv.style.marginTop = '10px';
+                    recommendedDiv.style.fontSize = '0.8em';
+                    recommendedDiv.style.color = '#7b1fa2';
+                    recommendedDiv.innerHTML = `<strong>Recommended:</strong> ${data.recommended_method === 'google_cloud_vision' ? '🔍 Google Cloud Vision' : '❌ No OCR Available'}`;
+                    ocrStatus.appendChild(recommendedDiv);
+                    
+                } else {
+                    document.getElementById('ocrInfo').querySelector('.ocr-status').innerHTML = 
+                        '<p style="color: #c62828;">Failed to load OCR system information</p>';
+                }
+            } catch (error) {
+                document.getElementById('ocrInfo').querySelector('.ocr-status').innerHTML = 
+                    '<p style="color: #c62828;">Error loading OCR system information</p>';
+            }
+        }
+
+        // Load files on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFiles();
+            loadOcrInfo();
+        });
+    </script>
+</body>
+</html>
