@@ -7,3 +7,8 @@ numpy==1.24.3
 Werkzeug==2.3.7
 google-cloud-vision==3.4.4
 google-auth==2.23.4
+google-cloud-texttospeech==2.16.3
+hashlib
+os
+json
+datetime

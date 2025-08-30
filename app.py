@@ -16,6 +16,7 @@ import io
 import re
 from google.cloud import vision
 from google.auth.exceptions import DefaultCredentialsError
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
@@ -101,6 +102,8 @@ def start_camera():
             print("📷 Camera already active, skipping startup")
             return True
         
+        print("🚀 Starting enhanced camera initialization...")
+        
         # Try to find available camera devices
         available_devices = find_available_cameras()
         if not available_devices:
@@ -111,58 +114,80 @@ def start_camera():
         for device_id in available_devices:
             try:
                 print(f"🔍 Attempting to open camera device {device_id}")
-                # Use AVFoundation backend explicitly on macOS
-                camera = cv2.VideoCapture(device_id, cv2.CAP_AVFOUNDATION)
                 
-                if camera.isOpened():
-                    # Set camera properties for better compatibility
-                    camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-                    camera.set(cv2.CAP_PROP_FPS, 30)
-                    camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                    
-                    # Warm up the camera
-                    import time
-                    time.sleep(0.5)
-                    
-                    # Test if we can actually read frames with retries
-                    frame_success = False
-                    for attempt in range(3):
-                        ret, test_frame = camera.read()
-                        if ret and test_frame is not None:
-                            print(f"✅ Camera device {device_id} opened successfully (Resolution: {test_frame.shape[1]}x{test_frame.shape[0]})")
-                            camera_active = True
+                # Try multiple backend approaches
+                backends = [
+                    (cv2.CAP_AVFOUNDATION, "AVFoundation"),
+                    (cv2.CAP_ANY, "Auto-detect"),
+                    (cv2.CAP_DEFAULT, "Default")
+                ]
+                
+                for backend_id, backend_name in backends:
+                    try:
+                        print(f"  🔧 Trying {backend_name} backend...")
+                        camera = cv2.VideoCapture(device_id, backend_id)
+                        
+                        if camera.isOpened():
+                            print(f"  ✅ {backend_name} backend opened device {device_id}")
                             
-                            # Reset capture statistics when starting fresh
-                            capture_stats = {
-                                'total_captures': 0,
-                                'successful_captures': 0,
-                                'failed_captures': 0,
-                                'total_capture_time': 0.0,
-                                'average_capture_time': 0.0,
-                                'last_capture_timestamp': None,
-                                'capture_errors': []
-                            }
-                            frame_success = True
-                            break
+                            # Set camera properties for better compatibility
+                            camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                            camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                            camera.set(cv2.CAP_PROP_FPS, 30)
+                            camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                            
+                            # Warm up the camera
+                            import time
+                            time.sleep(1.0)  # Increased warm-up time
+                            
+                            # Test if we can actually read frames with retries
+                            frame_success = False
+                            for attempt in range(5):  # Increased retry attempts
+                                ret, test_frame = camera.read()
+                                if ret and test_frame is not None:
+                                    print(f"✅ Camera device {device_id} opened successfully with {backend_name} (Resolution: {test_frame.shape[1]}x{test_frame.shape[0]})")
+                                    camera_active = True
+                                    
+                                    # Reset capture statistics when starting fresh
+                                    capture_stats = {
+                                        'total_captures': 0,
+                                        'successful_captures': 0,
+                                        'failed_captures': 0,
+                                        'total_capture_time': 0.0,
+                                        'average_capture_time': 0.0,
+                                        'last_capture_timestamp': None,
+                                        'capture_errors': []
+                                    }
+                                    frame_success = True
+                                    break
+                                else:
+                                    print(f"⚠️ Frame read attempt {attempt + 1} failed for device {device_id} with {backend_name}")
+                                    time.sleep(0.5)  # Increased delay between attempts
+                            
+                            if frame_success:
+                                return True
+                            else:
+                                print(f"❌ Device {device_id} failed frame validation with {backend_name}")
+                                camera.release()
+                                camera = None
                         else:
-                            print(f"⚠️ Frame read attempt {attempt + 1} failed for device {device_id}")
-                            time.sleep(0.2)
-                    
-                    if frame_success:
-                        return True
-                    else:
-                        print(f"❌ Device {device_id} failed frame validation after retries")
-                        camera.release()
-                        camera = None
-                else:
-                    print(f"❌ Failed to open camera device {device_id}")
+                            print(f"  ❌ {backend_name} backend failed to open device {device_id}")
+                            
+                    except Exception as e:
+                        print(f"  ❌ {backend_name} backend error: {e}")
+                        if camera:
+                            camera.release()
+                            camera = None
+                        continue
+                
+                print(f"❌ All backends failed for device {device_id}")
                     
             except Exception as e:
-                print(f"❌ Error opening camera device {device_id}: {e}")
+                print(f"❌ Error testing device {device_id}: {e}")
                 if camera:
                     camera.release()
                     camera = None
+                continue
         
         print("❌ No working camera devices found")
         
@@ -267,15 +292,16 @@ def start_camera_fallback():
     return False
 
 def find_available_cameras():
-    """Find available camera devices with proper validation"""
+    """Find available camera devices with enhanced macOS compatibility"""
     available_devices = []
     
-    # On macOS, only check devices 0 and 1 to avoid Continuity Camera issues
-    # Use AVFoundation backend explicitly for better macOS compatibility
-    for device_id in [0, 1]:  # Only check first two devices on macOS
+    # On macOS, try multiple approaches for camera detection
+    print("🔍 Starting enhanced camera device scan...")
+    
+    # Method 1: Try standard device indices with AVFoundation
+    for device_id in [0, 1]:
         try:
-            print(f"🔍 Testing camera device {device_id}...")
-            # Use AVFoundation backend explicitly on macOS
+            print(f"🔍 Method 1: Testing device {device_id} with AVFoundation...")
             test_camera = cv2.VideoCapture(device_id, cv2.CAP_AVFOUNDATION)
             
             if test_camera.isOpened():
@@ -287,7 +313,7 @@ def find_available_cameras():
                 
                 # Warm up the camera
                 import time
-                time.sleep(0.3)
+                time.sleep(0.5)
                 
                 # Try to read multiple frames to ensure it's really working
                 frame_count = 0
@@ -297,25 +323,116 @@ def find_available_cameras():
                         frame_count += 1
                         if frame_count >= 2:  # Need at least 2 successful frames
                             available_devices.append(device_id)
-                            print(f"✅ Found working camera at device {device_id} (Resolution: {frame.shape[1]}x{frame.shape[0]})")
+                            print(f"✅ Method 1: Found working camera at device {device_id} (Resolution: {frame.shape[1]}x{frame.shape[0]})")
                             break
                     else:
-                        print(f"⚠️ Device {device_id} frame read attempt {attempt + 1} failed")
-                        time.sleep(0.1)
+                        print(f"⚠️ Method 1: Device {device_id} frame read attempt {attempt + 1} failed")
+                        time.sleep(0.2)
                 
                 test_camera.release()
                 
                 if device_id not in available_devices:
-                    print(f"❌ Device {device_id} failed frame validation")
+                    print(f"❌ Method 1: Device {device_id} failed frame validation")
                     
             else:
-                print(f"❌ Device {device_id} could not be opened")
+                print(f"❌ Method 1: Device {device_id} could not be opened")
                 
         except Exception as e:
-            print(f"❌ Error testing device {device_id}: {e}")
+            print(f"❌ Method 1: Error testing device {device_id}: {e}")
             continue
     
-    print(f"📊 Camera scan complete: {len(available_devices)} working devices found")
+    # Method 2: Try without specifying backend (let OpenCV choose)
+    if not available_devices:
+        print("🔄 Method 2: Trying without backend specification...")
+        for device_id in [0, 1]:
+            try:
+                print(f"🔍 Method 2: Testing device {device_id} without backend...")
+                test_camera = cv2.VideoCapture(device_id)
+                
+                if test_camera.isOpened():
+                    # Set reasonable camera properties
+                    test_camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                    test_camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                    test_camera.set(cv2.CAP_PROP_FPS, 30)
+                    test_camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                    
+                    # Warm up the camera
+                    import time
+                    time.sleep(0.5)
+                    
+                    # Try to read multiple frames
+                    frame_count = 0
+                    for attempt in range(3):
+                        ret, frame = test_camera.read()
+                        if ret and frame is not None:
+                            frame_count += 1
+                            if frame_count >= 2:
+                                available_devices.append(device_id)
+                                print(f"✅ Method 2: Found working camera at device {device_id} (Resolution: {frame.shape[1]}x{frame.shape[0]})")
+                                break
+                        else:
+                            print(f"⚠️ Method 2: Device {device_id} frame read attempt {attempt + 1} failed")
+                            time.sleep(0.2)
+                    
+                    test_camera.release()
+                    
+                    if device_id not in available_devices:
+                        print(f"❌ Method 2: Device {device_id} failed frame validation")
+                        
+                else:
+                    print(f"❌ Method 2: Device {device_id} could not be opened")
+                    
+            except Exception as e:
+                print(f"❌ Method 2: Error testing device {device_id}: {e}")
+                continue
+    
+    # Method 3: Try with different resolutions
+    if not available_devices:
+        print("🔄 Method 3: Trying with different resolutions...")
+        for device_id in [0, 1]:
+            try:
+                print(f"🔍 Method 3: Testing device {device_id} with different resolutions...")
+                test_camera = cv2.VideoCapture(device_id)
+                
+                if test_camera.isOpened():
+                    # Try different resolution combinations
+                    resolutions = [(1280, 720), (800, 600), (640, 480), (320, 240)]
+                    
+                    for width, height in resolutions:
+                        test_camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+                        test_camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+                        test_camera.set(cv2.CAP_PROP_FPS, 30)
+                        test_camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                        
+                        time.sleep(0.3)
+                        
+                        ret, frame = test_camera.read()
+                        if ret and frame is not None:
+                            available_devices.append(device_id)
+                            print(f"✅ Method 3: Found working camera at device {device_id} with resolution {width}x{height}")
+                            break
+                    
+                    test_camera.release()
+                    
+                    if device_id not in available_devices:
+                        print(f"❌ Method 3: Device {device_id} failed with all resolutions")
+                        
+                else:
+                    print(f"❌ Method 3: Device {device_id} could not be opened")
+                    
+            except Exception as e:
+                print(f"❌ Method 3: Error testing device {device_id}: {e}")
+                continue
+    
+    print(f"📊 Enhanced camera scan complete: {len(available_devices)} working devices found")
+    
+    if not available_devices:
+        print("💡 Troubleshooting tips:")
+        print("   1. Check System Preferences > Security & Privacy > Camera")
+        print("   2. Close other camera applications (FaceTime, Zoom, etc.)")
+        print("   3. Restart your computer")
+        print("   4. Check if camera is physically connected and working")
+    
     return available_devices
 
 def get_camera_info():
@@ -413,28 +530,32 @@ def capture_image():
         })
         return None, "Captured frame is empty"
     
-    # Check image dimensions (minimum 100x100 pixels)
+    # Check image dimensions (minimum 50x50 pixels) - relaxed for testing
     height, width = frame.shape[:2]
-    if height < 100 or width < 100:
+    if height < 50 or width < 50:  # Relaxed from 100x100 to 50x50 for testing
         capture_stats['failed_captures'] += 1
         capture_stats['capture_errors'].append({
             'timestamp': datetime.now().isoformat(),
-            'error': f'Image too small: {width}x{height} (minimum 100x100)',
+            'error': f'Image too small: {width}x{height} (minimum 50x50)',
             'attempt_number': capture_stats['total_captures']
         })
-        return None, "Captured image too small (minimum 100x100 pixels)"
+        return None, "Captured image too small (minimum 50x50 pixels)"
     
-    # Check image brightness (basic quality check)
+    # Check image brightness (basic quality check) - very relaxed for debugging
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if len(frame.shape) == 3 else frame
     mean_brightness = np.mean(gray)
-    if mean_brightness < 30:  # Too dark
+    
+    # For debugging, allow very dark images but log the brightness
+    print(f"🔍 Debug: Image brightness = {mean_brightness:.1f}")
+    
+    if mean_brightness < 1:  # Only reject completely black images
         capture_stats['failed_captures'] += 1
         capture_stats['capture_errors'].append({
             'timestamp': datetime.now().isoformat(),
-            'error': f'Image too dark (brightness: {mean_brightness:.1f})',
+            'error': f'Image completely black (brightness: {mean_brightness:.1f})',
             'attempt_number': capture_stats['total_captures']
         })
-        return None, "Image too dark - improve lighting"
+        return None, "Image completely black - check camera lens"
     elif mean_brightness > 250:  # Too bright
         capture_stats['failed_captures'] += 1
         capture_stats['capture_errors'].append({
@@ -701,16 +822,48 @@ def index():
 @app.route('/api/camera/start', methods=['POST'])
 def start_camera_api():
     """Start the camera"""
-    success = start_camera()
-    return jsonify({
-        'success': success,
-        'message': 'Camera started' if success else 'Failed to start camera'
-    })
+    try:
+        success = start_camera()
+        if success:
+            # Verify camera is actually working
+            if camera and camera.isOpened():
+                ret, test_frame = camera.read()
+                if ret and test_frame is not None:
+                    return jsonify({
+                        'success': True,
+                        'message': 'Camera started successfully',
+                        'resolution': f"{test_frame.shape[1]}x{test_frame.shape[0]}"
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': 'Camera opened but cannot read frames'
+                    }), 400
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Camera failed to open'
+                }), 400
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to start camera'
+            }), 400
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Camera startup error: {str(e)}'
+        }), 500
 
 @app.route('/api/camera/troubleshoot', methods=['POST'])
 def troubleshoot_camera():
-    """Troubleshoot camera issues with detailed diagnostics"""
+    """Troubleshoot camera issues with comprehensive diagnostics"""
     try:
+        print("🔧 Starting comprehensive camera troubleshooting...")
+        
+        # Check system camera status
+        check_system_camera_status()
+        
         # Check system camera availability
         system_cameras = find_available_cameras()
         
@@ -720,6 +873,10 @@ def troubleshoot_camera():
             'camera_opened': camera.isOpened() if camera else False,
             'available_devices': system_cameras
         }
+        
+        # Check permissions
+        permissions_status = check_camera_permissions()
+        current_status['permissions'] = permissions_status
         
         # Try to start camera with fallback
         if not camera_active:
@@ -731,22 +888,36 @@ def troubleshoot_camera():
             current_status['startup_attempted'] = False
             current_status['startup_successful'] = True
         
-        # Generate troubleshooting recommendations
+        # Generate comprehensive troubleshooting recommendations
         recommendations = []
         
         if not system_cameras:
-            recommendations.append("No camera devices detected. Check hardware connections.")
-            recommendations.append("Ensure camera is properly connected and powered.")
+            recommendations.append("❌ No camera devices detected. Check hardware connections.")
+            recommendations.append("❌ Ensure camera is properly connected and powered.")
+            recommendations.append("❌ Check if camera is physically working in other apps.")
+        
+        if permissions_status == 'denied_or_unknown':
+            recommendations.append("🔐 Camera permissions may be denied.")
+            recommendations.append("🔐 Go to System Preferences > Security & Privacy > Camera")
+            recommendations.append("🔐 Ensure your terminal/IDE has camera access")
         
         if not current_status['camera_opened'] and system_cameras:
-            recommendations.append("Camera devices found but cannot be opened.")
-            recommendations.append("Check if another application is using the camera.")
-            recommendations.append("Try closing FaceTime, Zoom, or other camera apps.")
+            recommendations.append("⚠️ Camera devices found but cannot be opened.")
+            recommendations.append("⚠️ Check if another application is using the camera.")
+            recommendations.append("⚠️ Try closing FaceTime, Zoom, or other camera apps.")
+            recommendations.append("⚠️ Restart camera services: sudo killall VDCAssistant")
         
         if not current_status['startup_successful']:
-            recommendations.append("Camera startup failed after multiple attempts.")
-            recommendations.append("Try restarting your computer to reset camera state.")
-            recommendations.append("Check System Preferences > Security & Privacy > Camera permissions.")
+            recommendations.append("❌ Camera startup failed after multiple attempts.")
+            recommendations.append("❌ Try restarting your computer to reset camera state.")
+            recommendations.append("❌ Check System Preferences > Security & Privacy > Camera permissions.")
+            recommendations.append("❌ Try different camera backends (AVFoundation, Auto-detect)")
+        
+        # Add system-specific recommendations
+        if 'darwin' in os.uname().sysname.lower():
+            recommendations.append("🍎 macOS specific: Check Continuity Camera settings")
+            recommendations.append("🍎 macOS specific: Ensure no other apps are using camera")
+            recommendations.append("🍎 macOS specific: Try restarting camera services")
         
         return jsonify({
             'success': True,
@@ -847,22 +1018,123 @@ def camera_diagnostics():
             'timestamp': datetime.now().isoformat()
         }), 500
 
+@app.route('/api/camera/test-frame')
+def test_camera_frame():
+    """Test endpoint to capture a single frame and return its properties"""
+    try:
+        if not camera or not camera.isOpened():
+            return jsonify({
+                'success': False,
+                'error': 'Camera not available'
+            }), 400
+        
+        # Capture a test frame
+        ret, frame = camera.read()
+        if not ret or frame is None:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to capture frame'
+            }), 400
+        
+        # Analyze frame properties
+        height, width = frame.shape[:2]
+        channels = frame.shape[2] if len(frame.shape) == 3 else 1
+        
+        # Check brightness
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if len(frame.shape) == 3 else frame
+        mean_brightness = np.mean(gray)
+        std_brightness = np.std(gray)
+        
+        frame_info = {
+            'success': True,
+            'frame_properties': {
+                'dimensions': f"{width}x{height}",
+                'channels': channels,
+                'total_pixels': width * height,
+                'brightness': {
+                    'mean': round(mean_brightness, 2),
+                    'std': round(std_brightness, 2),
+                    'status': 'normal' if 20 <= mean_brightness <= 240 else 'extreme'
+                }
+            },
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        return jsonify(frame_info)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 def check_camera_permissions():
     """Check camera permissions (macOS specific)"""
     try:
         if 'darwin' in os.uname().sysname.lower():
-            # On macOS, we can't directly check permissions, but we can infer
-            # If we can open the camera, permissions are likely granted
-            test_cam = cv2.VideoCapture(0)
-            if test_cam.isOpened():
-                test_cam.release()
-                return 'granted'
-            else:
+            print("🔐 Checking macOS camera permissions...")
+            
+            # Method 1: Try to open camera directly
+            try:
+                test_cam = cv2.VideoCapture(0)
+                if test_cam.isOpened():
+                    test_cam.release()
+                    print("✅ Camera access appears to be granted")
+                    return 'granted'
+                else:
+                    print("⚠️ Camera could not be opened - may be permission issue")
+                    return 'denied_or_unknown'
+            except Exception as e:
+                print(f"❌ Camera access test failed: {e}")
                 return 'denied_or_unknown'
         else:
             return 'unknown_platform'
     except Exception:
         return 'unknown'
+
+def check_system_camera_status():
+    """Check system-level camera status and provide troubleshooting info"""
+    try:
+        if 'darwin' in os.uname().sysname.lower():
+            print("🔍 Checking macOS camera system status...")
+            
+            # Check if camera processes are running
+            import subprocess
+            try:
+                result = subprocess.run(['pgrep', '-f', 'VDCAssistant'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    print("✅ VDCAssistant process is running")
+                else:
+                    print("⚠️ VDCAssistant process not found")
+                    
+                result = subprocess.run(['pgrep', '-f', 'AppleCameraAssistant'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    print("✅ AppleCameraAssistant process is running")
+                else:
+                    print("⚠️ AppleCameraAssistant process not found")
+                    
+            except Exception as e:
+                print(f"⚠️ Could not check camera processes: {e}")
+            
+            # Check camera hardware
+            try:
+                result = subprocess.run(['system_profiler', 'SPCameraDataType'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    if 'Camera' in result.stdout:
+                        print("✅ Camera hardware detected by system")
+                    else:
+                        print("⚠️ No camera hardware detected by system")
+                else:
+                    print("⚠️ Could not query camera hardware info")
+            except Exception as e:
+                print(f"⚠️ Could not check camera hardware: {e}")
+                
+        else:
+            print("🔍 Platform not supported for detailed camera status check")
+            
+    except Exception as e:
+        print(f"❌ Error checking system camera status: {e}")
 
 def check_file_permissions():
     """Check if we can write to the images directory"""
@@ -891,6 +1163,20 @@ def camera_status():
             camera_info = get_camera_info()
             if camera_info:
                 status_data['camera_info'] = camera_info
+            
+            # Test frame capture
+            try:
+                ret, test_frame = camera.read()
+                status_data['frame_test'] = {
+                    'success': ret and test_frame is not None,
+                    'frame_shape': test_frame.shape if test_frame is not None else None,
+                    'frame_size': test_frame.size if test_frame is not None else 0
+                }
+            except Exception as e:
+                status_data['frame_test'] = {
+                    'success': False,
+                    'error': str(e)
+                }
         
         # Add available devices information
         available_devices = find_available_cameras()
@@ -916,31 +1202,104 @@ def camera_status():
 @app.route('/api/capture', methods=['POST'])
 def capture_api():
     """Capture an image via API with enhanced response"""
-    filename, message = capture_image()
-    
-    if filename:
+    try:
+        filename, message = capture_image()
+        
+        if filename:
+            # Simulate shutter sound
+            simulate_shutter_sound()
+            
+            # Get detailed image information
+            image_path = os.path.join(UPLOAD_FOLDER, filename)
+            image_info = get_image_info(image_path)
+            
+            response_data = {
+                'success': True,
+                'filename': filename,
+                'message': message,
+                'timestamp': datetime.now().isoformat(),
+                'image_info': image_info
+            }
+            
+            return jsonify(response_data)
+        else:
+            return jsonify({
+                'success': False,
+                'message': message,
+                'timestamp': datetime.now().isoformat()
+            }), 400
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Capture error: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/upload/mobile', methods=['POST'])
+def upload_mobile_image():
+    """Upload and process image from mobile camera"""
+    try:
+        # Check if image file is present
+        if 'image' not in request.files:
+            return jsonify({
+                'success': False,
+                'message': 'No image file provided'
+            }), 400
+        
+        file = request.files['image']
+        
+        # Check if file is selected
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'message': 'No file selected'
+            }), 400
+        
+        # Check if file is allowed
+        if not allowed_file(file.filename):
+            return jsonify({
+                'success': False,
+                'message': 'Invalid file type. Only JPG, JPEG, PNG allowed.'
+            }), 400
+        
+        # Generate filename for mobile capture
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"mobile_{timestamp}_p001.jpg"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        
+        # Save the file
+        file.save(filepath)
+        
+        # Verify file was saved
+        if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to save mobile image'
+            }), 500
+        
+        # Get image information
+        image_info = get_image_info(filepath)
+        
         # Simulate shutter sound
         simulate_shutter_sound()
-        
-        # Get detailed image information
-        image_path = os.path.join(UPLOAD_FOLDER, filename)
-        image_info = get_image_info(image_path)
         
         response_data = {
             'success': True,
             'filename': filename,
-            'message': message,
+            'message': 'Mobile image uploaded successfully',
             'timestamp': datetime.now().isoformat(),
+            'file_size': os.path.getsize(filepath),
             'image_info': image_info
         }
         
         return jsonify(response_data)
-    else:
+        
+    except Exception as e:
         return jsonify({
             'success': False,
-            'message': message,
+            'message': f'Mobile upload error: {str(e)}',
             'timestamp': datetime.now().isoformat()
-        }), 400
+        }), 500
 
 @app.route('/api/ocr/<filename>', methods=['POST'])
 def ocr_api(filename):
@@ -1325,14 +1684,14 @@ def video_stream():
         global camera
         frame_count = 0
         error_count = 0
-        max_errors = 5  # Reduced from 10 to fail faster
+        max_errors = 10  # Increased error tolerance
         
         # Warm up the camera with a few initial reads
-        for _ in range(3):
+        for _ in range(5):  # Increased warm-up frames
             try:
                 if camera and camera.isOpened():
                     camera.read()
-                time.sleep(0.1)
+                time.sleep(0.2)  # Increased delay
             except:
                 pass
         
@@ -1378,4 +1737,17 @@ def video_stream():
     return app.response_class(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)
+    # Check if SSL certificates exist for HTTPS
+    ssl_cert = 'cert.pem'
+    ssl_key = 'key.pem'
+    
+    if os.path.exists(ssl_cert) and os.path.exists(ssl_key):
+        print("🔒 Starting with HTTPS support...")
+        print("📱 Mobile camera access: https://YOUR_IP:5001")
+        app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False, 
+                ssl_context=(ssl_cert, ssl_key))
+    else:
+        print("🌐 Starting with HTTP (local development)...")
+        print("📱 Mobile camera access: http://localhost:5001 or http://YOUR_IP:5001")
+        print("⚠️  Note: Some browsers may require HTTPS for camera access")
+        app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)

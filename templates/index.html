@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Story Reader - Camera Capture</title>
     <style>
         * {
@@ -98,6 +98,8 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .btn-primary {
@@ -638,20 +640,399 @@
         }
 
         @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                padding: 20px;
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 10px;
+                margin: 0;
+                max-width: 100%;
+            }
+            
+            .header {
+                padding: 20px 15px;
             }
             
             .header h1 {
-                font-size: 2em;
+                font-size: 1.8em;
+                margin-bottom: 8px;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .camera-section, .files-section {
+                padding: 15px;
             }
             
             .camera-controls {
                 flex-direction: column;
                 align-items: center;
+                gap: 10px;
             }
+            
+            .btn {
+                padding: 18px 25px;
+                font-size: 1.1em;
+                margin: 3px;
+                min-width: 200px;
+                width: 100%;
+                max-width: 300px;
+                border-radius: 15px;
+            }
+            
+            #videoElement {
+                height: 300px;
+                border-radius: 8px;
+            }
+            
+            .video-container {
+                margin-bottom: 15px;
+                border-radius: 8px;
+            }
+            
+            .file-item {
+                padding: 12px;
+                margin-bottom: 8px;
+            }
+            
+            .file-actions {
+                flex-direction: column;
+                gap: 5px;
+                width: 100%;
+            }
+            
+            .file-actions .btn-small {
+                width: 100%;
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* Mobile-specific styles for phones */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .header {
+                padding: 15px 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .header p {
+                font-size: 0.9em;
+            }
+            
+            .main-content {
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .camera-section, .files-section {
+                padding: 12px;
+            }
+            
+            .btn {
+                padding: 16px 20px;
+                font-size: 1em;
+                min-width: 180px;
+                max-width: 100%;
+            }
+            
+            #videoElement {
+                height: 250px;
+            }
+            
+            .mobile-indicator {
+                padding: 8px;
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+            
+            .mobile-camera-info {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+            
+            .mobile-camera-info h3 {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+            
+            .mobile-camera-info li {
+                font-size: 0.9em;
+                padding: 3px 0;
+            }
+            
+            .ocr-info {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+            
+            .ocr-info h3 {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+            
+            .file-item {
+                padding: 10px;
+            }
+            
+            .file-name {
+                font-size: 0.85em;
+            }
+            
+            .file-details {
+                font-size: 0.75em;
+            }
+            
+            .status-badge {
+                font-size: 0.65em;
+                padding: 3px 6px;
+            }
+            
+            /* Mobile OCR results */
+            .ocr-results-section {
+                padding: 15px;
+                margin-top: 15px;
+            }
+            
+            .ocr-results-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .ocr-image-preview img {
+                max-width: 100%;
+                max-height: 200px;
+            }
+            
+            .ocr-text-display {
+                min-height: 150px;
+                max-height: 250px;
+                font-size: 0.9em;
+                line-height: 1.4;
+            }
+            
+            .ocr-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .ocr-actions .btn {
+                width: 100%;
+                padding: 12px;
+                font-size: 0.9em;
+            }
+            
+            /* Mobile quick actions */
+            .mobile-quick-actions {
+                padding: 12px;
+                margin-top: 12px;
+            }
+            
+            .mobile-capture-btn, .mobile-ocr-btn {
+                padding: 18px;
+                font-size: 1.1em;
+            }
+        }
+
+        /* Mobile-specific styles */
+        .mobile-indicator {
+            display: none;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .mobile-indicator.show {
+            display: block;
+        }
+
+        .mobile-camera-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .mobile-camera-info.show {
+            display: block;
+        }
+
+        .mobile-camera-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .mobile-camera-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .mobile-camera-info li {
+            padding: 5px 0;
+            color: #1565c0;
+        }
+
+        .mobile-camera-status {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .status-value {
+            font-weight: 600;
+            font-size: 0.9em;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-family: monospace;
+        }
+
+        .status-value.checking {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-value.supported {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-value.unsupported {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-value.secure {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-value.insecure {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .mobile-quick-actions {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .quick-action-row {
+            margin-bottom: 10px;
+        }
+
+        .quick-action-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .mobile-capture-btn, .mobile-ocr-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.2em;
+            font-weight: 700;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .mobile-capture-btn {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .mobile-ocr-btn {
+            background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);
+            color: white;
+        }
+
+        .mobile-capture-btn:active, .mobile-ocr-btn:active {
+            transform: scale(0.98);
+        }
+
+        .camera-mode-indicator {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .mode-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mode-icon {
+            font-size: 1.2em;
+        }
+
+        .mode-text {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .mode-status {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .mode-status.mobile {
+            background: rgba(76, 175, 80, 0.8);
+        }
+
+        .mode-status.desktop {
+            background: rgba(33, 150, 243, 0.8);
+        }
+
+        .mode-status.fallback {
+            background: rgba(255, 152, 0, 0.8);
         }
     </style>
 </head>
@@ -667,7 +1048,47 @@
             <div class="camera-section">
                 <h2>📷 Camera Capture</h2>
                 
+                <!-- Mobile Indicator -->
+                <div class="mobile-indicator" id="mobileIndicator">
+                    📱 Mobile Camera Mode - Using device camera via local network
+                </div>
 
+                <!-- Camera Mode Indicator -->
+                <div class="camera-mode-indicator" id="cameraModeIndicator" style="display: none;">
+                    <div class="mode-info">
+                        <span class="mode-icon" id="modeIcon">📷</span>
+                        <span class="mode-text" id="modeText">Camera Mode</span>
+                        <span class="mode-status" id="modeStatus">Ready</span>
+                    </div>
+                </div>
+
+                <!-- Mobile Camera Info -->
+                <div class="mobile-camera-info" id="mobileCameraInfo">
+                    <h3>📱 Mobile Camera Features</h3>
+                    <ul>
+                        <li>✅ Direct access to device camera</li>
+                        <li>✅ High-quality image capture</li>
+                        <li>✅ Automatic back camera selection</li>
+                        <li>✅ Touch-friendly interface</li>
+                        <li>✅ Works on any mobile device</li>
+                    </ul>
+                    
+                    <!-- Mobile Camera Status -->
+                    <div class="mobile-camera-status" id="mobileCameraStatus">
+                        <div class="status-item">
+                            <span class="status-label">Browser Support:</span>
+                            <span class="status-value" id="browserSupportStatus">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">HTTPS Status:</span>
+                            <span class="status-value" id="httpsStatus">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Camera API:</span>
+                            <span class="status-value" id="cameraApiStatus">Checking...</span>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="ocr-info" id="ocrInfo">
                     <h3>🔍 OCR System Status</h3>
@@ -682,14 +1103,30 @@
 
 
                 <div class="video-container">
-                    <img id="videoElement" alt="Camera feed will appear here">
+                    <video id="videoElement" autoplay muted playsinline alt="Camera feed will appear here"></video>
+                    <canvas id="mobileCanvas" style="display: none;"></canvas>
                 </div>
 
                 <div class="camera-controls">
                     <button id="startCamera" class="btn btn-primary">Start Camera</button>
                     <button id="stopCamera" class="btn btn-danger" disabled>Stop Camera</button>
                     <button id="captureBtn" class="btn btn-success" disabled>Capture</button>
+                    <button id="testFrameBtn" class="btn btn-info" disabled onclick="testCameraFrame()">🧪 Test Frame</button>
                     <button id="ocrBtn" class="btn btn-info" disabled onclick="performOcrOnLastCapture()">🔍 OCR Last Image</button>
+                </div>
+
+                <!-- Mobile-specific quick actions -->
+                <div class="mobile-quick-actions" id="mobileQuickActions" style="display: none;">
+                    <div class="quick-action-row">
+                        <button class="btn btn-success mobile-capture-btn" onclick="captureImage()">
+                            📸 Quick Capture
+                        </button>
+                    </div>
+                    <div class="quick-action-row">
+                        <button class="btn btn-info mobile-ocr-btn" onclick="performOcrOnLastCapture()">
+                            🔍 Quick OCR
+                        </button>
+                    </div>
                 </div>
 
                 <div class="loading" id="captureLoading">
@@ -801,9 +1238,12 @@
         // Global variables
         let cameraActive = false;
         let captureInProgress = false;
+        let isMobileDevice = false;
+        let mobileStream = null;
 
         // DOM elements
         const videoElement = document.getElementById('videoElement');
+        const mobileCanvas = document.getElementById('mobileCanvas');
         const startCameraBtn = document.getElementById('startCamera');
         const stopCameraBtn = document.getElementById('stopCamera');
         const captureBtn = document.getElementById('captureBtn');
@@ -817,10 +1257,85 @@
         captureBtn.addEventListener('click', captureImage);
         document.addEventListener('keydown', handleKeyPress);
         videoElement.addEventListener('click', captureImage);
+        
+        // Detect mobile device
+        function detectMobileDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+            
+            if (isMobileDevice) {
+                console.log('📱 Mobile device detected');
+                // Update UI for mobile
+                startCameraBtn.textContent = '📱 Start Mobile Camera';
+                captureBtn.textContent = '📸 Capture Photo';
+                
+                // Show mobile indicators
+                document.getElementById('mobileIndicator').classList.add('show');
+                document.getElementById('mobileCameraInfo').classList.add('show');
+                document.getElementById('mobileQuickActions').style.display = 'block';
+                
+                // Hide test frame button on mobile
+                document.getElementById('testFrameBtn').style.display = 'none';
+            } else {
+                // Hide mobile indicators for desktop
+                document.getElementById('mobileIndicator').classList.remove('show');
+                document.getElementById('mobileCameraInfo').classList.remove('show');
+                document.getElementById('mobileQuickActions').style.display = 'none';
+                
+                // Show test frame button on desktop
+                document.getElementById('testFrameBtn').style.display = 'inline-block';
+            }
+            
+            return isMobileDevice;
+        }
 
-        // Start camera
+        // Enable test frame button when camera starts
+        function enableTestFrameButton() {
+            document.getElementById('testFrameBtn').disabled = false;
+        }
+
+        // Test camera frame
+        async function testCameraFrame() {
+            try {
+                const response = await fetch('/api/camera/test-frame');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const props = data.frame_properties;
+                    const brightness = props.brightness;
+                    
+                    showNotification(`Frame test successful: ${props.dimensions}, Brightness: ${brightness.mean} (${brightness.status})`, 'success');
+                    
+                    // Log detailed frame info
+                    console.log('Frame test results:', data);
+                } else {
+                    showNotification('Frame test failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Error testing frame: ' + error.message, 'error');
+            }
+        }
+
+        // Start camera with hybrid approach
         async function startCamera() {
             try {
+                if (isMobileDevice) {
+                    // Try mobile camera first, fallback to server camera
+                    await startMobileCameraWithFallback();
+                } else {
+                    // Use desktop camera via server
+                    await startDesktopCamera();
+                }
+            } catch (error) {
+                showNotification('Error starting camera: ' + error.message, 'error');
+            }
+        }
+
+        // Start desktop camera
+        async function startDesktopCamera() {
+            try {
+                updateCameraModeIndicator('desktop', 'Connecting...');
+                
                 const response = await fetch('/api/camera/start', { method: 'POST' });
                 const data = await response.json();
                 
@@ -829,32 +1344,319 @@
                     startCameraBtn.disabled = true;
                     stopCameraBtn.disabled = false;
                     captureBtn.disabled = false;
+                    enableTestFrameButton();
+                    document.getElementById('ocrBtn').disabled = false;
                     
                     // Start video stream
                     videoElement.src = '/api/stream';
-                    showNotification('Camera started successfully!', 'success');
+                    videoElement.load();
+                    
+                    videoElement.onloadedmetadata = () => {
+                        updateCameraModeIndicator('desktop', 'Active');
+                        showNotification('🖥️ Desktop camera started successfully!', 'success');
+                    };
+                    
+                    videoElement.onerror = () => {
+                        updateCameraModeIndicator('desktop', 'Error');
+                        showNotification('Video stream error - check camera permissions', 'error');
+                    };
                 } else {
-                    showNotification('Failed to start camera: ' + data.message, 'error');
+                    updateCameraModeIndicator('desktop', 'Failed');
+                    showNotification('Failed to start desktop camera: ' + data.message, 'error');
                 }
             } catch (error) {
-                showNotification('Error starting camera: ' + error.message, 'error');
+                updateCameraModeIndicator('desktop', 'Error');
+                showNotification('Desktop camera error: ' + error.message, 'error');
             }
         }
+
+        // Start mobile camera with fallback to server camera
+        async function startMobileCameraWithFallback() {
+            try {
+                // First try direct mobile camera access
+                const mobileSuccess = await tryMobileCamera();
+                
+                if (mobileSuccess) {
+                    showNotification('📱 Mobile camera started successfully!', 'success');
+                    return;
+                }
+                
+                // If mobile camera fails, try server camera as fallback
+                console.log('Mobile camera failed, trying server camera fallback...');
+                updateCameraModeIndicator('fallback', 'Switching...');
+                showNotification('📱 Mobile camera unavailable, using server camera...', 'info');
+                
+                await startDesktopCamera();
+                
+            } catch (error) {
+                console.error('Mobile camera with fallback error:', error);
+                updateCameraModeIndicator('fallback', 'Failed');
+                showNotification('❌ All camera options failed: ' + error.message, 'error');
+            }
+        }
+
+        // Update camera mode indicator
+        function updateCameraModeIndicator(mode, status) {
+            const indicator = document.getElementById('cameraModeIndicator');
+            const icon = document.getElementById('modeIcon');
+            const text = document.getElementById('modeText');
+            const statusEl = document.getElementById('modeStatus');
+            
+            if (indicator && icon && text && statusEl) {
+                indicator.style.display = 'block';
+                
+                switch (mode) {
+                    case 'mobile':
+                        icon.textContent = '📱';
+                        text.textContent = 'Mobile Camera';
+                        statusEl.textContent = status;
+                        statusEl.className = 'mode-status mobile';
+                        break;
+                    case 'desktop':
+                        icon.textContent = '🖥️';
+                        text.textContent = 'Desktop Camera';
+                        statusEl.textContent = status;
+                        statusEl.className = 'mode-status desktop';
+                        break;
+                    case 'fallback':
+                        icon.textContent = '🔄';
+                        text.textContent = 'Fallback Mode';
+                        statusEl.textContent = status;
+                        statusEl.className = 'mode-status fallback';
+                        break;
+                    default:
+                        icon.textContent = '📷';
+                        text.textContent = 'Camera';
+                        statusEl.textContent = status;
+                        statusEl.className = 'mode-status';
+                }
+            }
+        }
+
+        // Hide camera mode indicator
+        function hideCameraModeIndicator() {
+            const indicator = document.getElementById('cameraModeIndicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+
+        // Try mobile camera access
+        async function tryMobileCamera() {
+            try {
+                updateCameraModeIndicator('mobile', 'Connecting...');
+                
+                // Check if camera access is allowed
+                const accessCheck = isCameraAccessAllowed();
+                
+                if (!accessCheck.allowed) {
+                    console.log('Camera access not allowed:', accessCheck.reason);
+                    updateCameraModeIndicator('mobile', 'Access Denied');
+                    return false;
+                }
+                
+                // Check browser support
+                const support = checkGetUserMediaSupport();
+                if (support === 'unsupported') {
+                    console.log('getUserMedia not supported');
+                    updateCameraModeIndicator('mobile', 'Not Supported');
+                    return false;
+                }
+                
+                updateCameraModeIndicator('mobile', 'Requesting Access...');
+                
+                // Try to get camera access
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280, min: 640 },
+                        height: { ideal: 720, min: 480 }
+                    },
+                    audio: false
+                };
+                
+                // Try with fallback constraints
+                try {
+                    mobileStream = await getUserMediaWithFallback(constraints);
+                } catch (error) {
+                    console.log('Primary constraints failed, trying fallback...');
+                    updateCameraModeIndicator('mobile', 'Retrying...');
+                    
+                    const fallbackConstraints = {
+                        video: true,
+                        audio: false
+                    };
+                    
+                    mobileStream = await getUserMediaWithFallback(fallbackConstraints);
+                }
+                
+                // Set the video source
+                videoElement.srcObject = mobileStream;
+                videoElement.play();
+                
+                cameraActive = true;
+                startCameraBtn.disabled = true;
+                stopCameraBtn.disabled = false;
+                captureBtn.disabled = false;
+                document.getElementById('ocrBtn').disabled = false;
+                
+                // Enable mobile quick actions
+                const mobileQuickActions = document.getElementById('mobileQuickActions');
+                if (mobileQuickActions) {
+                    mobileQuickActions.style.display = 'block';
+                }
+                
+                // Hide test frame button for mobile
+                document.getElementById('testFrameBtn').style.display = 'none';
+                
+                updateCameraModeIndicator('mobile', 'Active');
+                return true;
+                
+            } catch (error) {
+                console.error('Mobile camera access failed:', error);
+                updateCameraModeIndicator('mobile', 'Failed');
+                
+                // Provide specific error messages
+                if (error.name === 'NotAllowedError') {
+                    showNotification('❌ Camera permission denied. Please allow camera access.', 'error');
+                } else if (error.name === 'NotFoundError') {
+                    showNotification('❌ No camera found on this device.', 'error');
+                } else if (error.name === 'NotReadableError') {
+                    showNotification('❌ Camera is already in use by another application.', 'error');
+                } else if (error.name === 'SecurityError') {
+                    showNotification('❌ Camera access blocked for security reasons.', 'error');
+                } else {
+                    showNotification('❌ Mobile camera error: ' + error.message, 'error');
+                }
+                
+                return false;
+            }
+        }
+
+        // Check if getUserMedia is supported
+        function checkGetUserMediaSupport() {
+            // Check for modern API
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                return 'modern';
+            }
+            // Check for legacy API
+            else if (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia) {
+                return 'legacy';
+            }
+            // Not supported
+            else {
+                return 'unsupported';
+            }
+        }
+
+        // Get user media with fallback support
+        function getUserMediaWithFallback(constraints) {
+            return new Promise((resolve, reject) => {
+                const support = checkGetUserMediaSupport();
+                
+                if (support === 'modern') {
+                    // Use modern API
+                    navigator.mediaDevices.getUserMedia(constraints)
+                        .then(resolve)
+                        .catch(reject);
+                }
+                else if (support === 'legacy') {
+                    // Use legacy API
+                    const getUserMedia = navigator.getUserMedia || 
+                                       navigator.webkitGetUserMedia || 
+                                       navigator.mozGetUserMedia || 
+                                       navigator.msGetUserMedia;
+                    
+                    getUserMedia.call(navigator, constraints, resolve, reject);
+                }
+                else {
+                    reject(new Error('getUserMedia is not supported in this browser'));
+                }
+            });
+        }
+
+        // Check if camera access is allowed in current environment
+        function isCameraAccessAllowed() {
+            const protocol = location.protocol;
+            const hostname = location.hostname;
+            
+            // Always allowed
+            if (protocol === 'https:') return { allowed: true, reason: 'HTTPS' };
+            if (hostname === 'localhost') return { allowed: true, reason: 'localhost' };
+            if (hostname === '127.0.0.1') return { allowed: true, reason: 'localhost' };
+            
+            // Check for local network IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+            const localNetworkPatterns = [
+                /^192\.168\./,
+                /^10\./,
+                /^172\.(1[6-9]|2[0-9]|3[0-1])\./
+            ];
+            
+            for (const pattern of localNetworkPatterns) {
+                if (pattern.test(hostname)) {
+                    return { allowed: true, reason: 'local_network' };
+                }
+            }
+            
+            // Check for development domains
+            const devDomains = ['.local', '.dev', '.test'];
+            for (const domain of devDomains) {
+                if (hostname.includes(domain)) {
+                    return { allowed: true, reason: 'development' };
+                }
+            }
+            
+            return { allowed: false, reason: 'requires_https' };
+        }
+
+
 
         // Stop camera
         async function stopCamera() {
             try {
-                const response = await fetch('/api/camera/stop', { method: 'POST' });
-                const data = await response.json();
+                if (isMobileDevice && mobileStream) {
+                    // Stop mobile camera stream
+                    mobileStream.getTracks().forEach(track => track.stop());
+                    mobileStream = null;
+                    videoElement.srcObject = null;
+                    
+                    cameraActive = false;
+                    startCameraBtn.disabled = false;
+                    stopCameraBtn.disabled = true;
+                    captureBtn.disabled = true;
+                    document.getElementById('ocrBtn').disabled = true;
+                    
+                    // Hide mobile quick actions
+                    const mobileQuickActions = document.getElementById('mobileQuickActions');
+                    if (mobileQuickActions) {
+                        mobileQuickActions.style.display = 'none';
+                    }
+                    
+                    // Show test frame button again
+                    document.getElementById('testFrameBtn').style.display = 'inline-block';
+                    
+                    showNotification('📱 Mobile camera stopped', 'info');
+                } else {
+                    // Stop desktop camera
+                    const response = await fetch('/api/camera/stop', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    cameraActive = false;
+                    startCameraBtn.disabled = false;
+                    stopCameraBtn.disabled = true;
+                    captureBtn.disabled = true;
+                    document.getElementById('testFrameBtn').disabled = true; // Disable test frame button
+                    document.getElementById('ocrBtn').disabled = true; // Disable OCR button
+                    
+                    // Stop video stream properly
+                    videoElement.src = '';
+                    videoElement.load();
+                    showNotification('Camera stopped', 'info');
+                }
                 
-                cameraActive = false;
-                startCameraBtn.disabled = false;
-                stopCameraBtn.disabled = true;
-                captureBtn.disabled = true;
+                // Hide camera mode indicator
+                hideCameraModeIndicator();
                 
-                // Stop video stream
-                videoElement.src = '';
-                showNotification('Camera stopped', 'info');
             } catch (error) {
                 showNotification('Error stopping camera: ' + error.message, 'error');
             }
@@ -868,33 +1670,95 @@
             captureLoading.style.display = 'block';
             
             try {
-                const response = await fetch('/api/capture', { method: 'POST' });
-                const data = await response.json();
-                
-                if (data.success) {
-                    showNotification('Image captured: ' + data.filename, 'success');
-                    
-                    // Immediately update last capture display with new image info
-                    if (data.image_info) {
-                        const mockFile = {
-                            filename: data.filename,
-                            size: data.image_info.size_bytes,
-                            width: data.image_info.width,
-                            height: data.image_info.height,
-                            created: new Date().toISOString()
-                        };
-                        updateLastCaptureDisplay(mockFile);
-                    }
-                    
-                    await loadFiles(); // Refresh file list
+                if (isMobileDevice) {
+                    // Capture from mobile camera
+                    await captureMobileImage();
                 } else {
-                    showNotification('Capture failed: ' + data.message, 'error');
+                    // Capture from desktop camera
+                    const response = await fetch('/api/capture', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showNotification('Image captured: ' + data.filename, 'success');
+                        
+                        // Immediately update last capture display with new image info
+                        if (data.image_info) {
+                            const mockFile = {
+                                filename: data.filename,
+                                size: data.image_info.size_bytes,
+                                width: data.image_info.width,
+                                height: data.image_info.height,
+                                created: new Date().toISOString()
+                            };
+                            updateLastCaptureDisplay(mockFile);
+                        }
+                        
+                        await loadFiles(); // Refresh file list
+                    } else {
+                        showNotification('Capture failed: ' + data.message, 'error');
+                    }
                 }
             } catch (error) {
                 showNotification('Error capturing image: ' + error.message, 'error');
             } finally {
                 captureInProgress = false;
                 captureLoading.style.display = 'none';
+            }
+        }
+
+        // Capture image from mobile camera
+        async function captureMobileImage() {
+            try {
+                // Get video dimensions
+                const videoWidth = videoElement.videoWidth;
+                const videoHeight = videoElement.videoHeight;
+                
+                // Set canvas dimensions to match video
+                mobileCanvas.width = videoWidth;
+                mobileCanvas.height = videoHeight;
+                
+                // Draw current video frame to canvas
+                const ctx = mobileCanvas.getContext('2d');
+                ctx.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
+                
+                // Convert canvas to blob
+                const blob = await new Promise(resolve => {
+                    mobileCanvas.toBlob(resolve, 'image/jpeg', 0.95);
+                });
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('image', blob, 'mobile_capture.jpg');
+                
+                // Upload to server
+                const response = await fetch('/api/upload/mobile', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('📱 Mobile image captured: ' + data.filename, 'success');
+                    
+                    // Update last capture display
+                    const mockFile = {
+                        filename: data.filename,
+                        size: data.file_size,
+                        width: videoWidth,
+                        height: videoHeight,
+                        created: new Date().toISOString()
+                    };
+                    updateLastCaptureDisplay(mockFile);
+                    
+                    await loadFiles(); // Refresh file list
+                } else {
+                    showNotification('Mobile capture failed: ' + data.message, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Mobile capture error:', error);
+                showNotification('Error capturing mobile image: ' + error.message, 'error');
             }
         }
 
@@ -1366,8 +2230,104 @@
             }
         }
 
+        // Show HTTPS setup instructions
+        function showHttpsInstructions() {
+            const instructions = `
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 10px 0; font-size: 0.9em;">
+                    <h4 style="color: #856404; margin-bottom: 10px;">🔒 HTTPS Setup Required</h4>
+                    <p style="color: #856404; margin-bottom: 10px;">Camera access requires HTTPS for security. Here are your options:</p>
+                    <ul style="color: #856404; margin-left: 20px;">
+                        <li><strong>Option 1:</strong> Use localhost (http://localhost:5001)</li>
+                        <li><strong>Option 2:</strong> Use your local IP (http://10.0.0.24:5001)</li>
+                        <li><strong>Option 3:</strong> Set up HTTPS with SSL certificate</li>
+                        <li><strong>Option 4:</strong> Use ngrok for HTTPS tunneling</li>
+                    </ul>
+                    <p style="color: #856404; margin-top: 10px; font-size: 0.8em;">
+                        <strong>Quick Fix:</strong> Try accessing via <code>http://localhost:5001</code> or <code>http://10.0.0.24:5001</code>
+                    </p>
+                </div>
+            `;
+            
+            // Create a temporary instruction element
+            const instructionDiv = document.createElement('div');
+            instructionDiv.innerHTML = instructions;
+            instructionDiv.id = 'https-instructions';
+            
+            // Insert after the mobile camera info
+            const mobileCameraInfo = document.getElementById('mobileCameraInfo');
+            if (mobileCameraInfo && !document.getElementById('https-instructions')) {
+                mobileCameraInfo.parentNode.insertBefore(instructionDiv, mobileCameraInfo.nextSibling);
+            }
+        }
+
+        // Check browser compatibility on page load
+        function checkBrowserCompatibility() {
+            const support = checkGetUserMediaSupport();
+            const accessCheck = isCameraAccessAllowed();
+            
+            console.log('Browser compatibility check:', {
+                getUserMediaSupport: support,
+                cameraAccess: accessCheck,
+                userAgent: navigator.userAgent,
+                protocol: location.protocol,
+                hostname: location.hostname
+            });
+            
+            // Update status indicators
+            if (isMobileDevice) {
+                updateMobileCameraStatus(support, accessCheck.allowed);
+                
+                // Show compatibility warning if needed
+                if (support === 'unsupported') {
+                    showNotification('⚠️ Camera access not supported in this browser. Please use Chrome, Safari, or Firefox.', 'error');
+                } else if (!accessCheck.allowed) {
+                    showNotification('⚠️ Camera access requires HTTPS or local network. See instructions below.', 'error');
+                    showHttpsInstructions();
+                } else {
+                    showNotification('✅ Mobile camera ready! Tap "Start Mobile Camera" to begin.', 'info');
+                }
+            }
+        }
+
+        // Update mobile camera status indicators
+        function updateMobileCameraStatus(support, isSecure) {
+            const browserSupportStatus = document.getElementById('browserSupportStatus');
+            const httpsStatus = document.getElementById('httpsStatus');
+            const cameraApiStatus = document.getElementById('cameraApiStatus');
+            
+            if (browserSupportStatus) {
+                browserSupportStatus.textContent = support === 'unsupported' ? 'Unsupported' : 'Supported';
+                browserSupportStatus.className = `status-value ${support === 'unsupported' ? 'unsupported' : 'supported'}`;
+            }
+            
+            if (httpsStatus) {
+                if (isSecure) {
+                    httpsStatus.textContent = 'Allowed';
+                    httpsStatus.className = 'status-value supported';
+                } else {
+                    httpsStatus.textContent = 'HTTPS Required';
+                    httpsStatus.className = 'status-value unsupported';
+                }
+            }
+            
+            if (cameraApiStatus) {
+                if (support === 'modern') {
+                    cameraApiStatus.textContent = 'Modern API';
+                    cameraApiStatus.className = 'status-value supported';
+                } else if (support === 'legacy') {
+                    cameraApiStatus.textContent = 'Legacy API';
+                    cameraApiStatus.className = 'status-value supported';
+                } else {
+                    cameraApiStatus.textContent = 'Not Available';
+                    cameraApiStatus.className = 'status-value unsupported';
+                }
+            }
+        }
+
         // Load files on page load
         document.addEventListener('DOMContentLoaded', () => {
+            detectMobileDevice();
+            checkBrowserCompatibility();
             loadFiles();
             loadOcrInfo();
         });
