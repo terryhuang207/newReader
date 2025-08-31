@@ -15,6 +15,7 @@ from PIL import Image
 import io
 import re
 from google.cloud import vision
+from google.cloud import texttospeech
 from google.auth.exceptions import DefaultCredentialsError
 from werkzeug.utils import secure_filename
 
@@ -30,7 +31,10 @@ ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
 # Google Cloud Vision configuration
 GOOGLE_CLOUD_VISION_ENABLED = True  # Set to False to disable Google Cloud Vision
 GOOGLE_CLOUD_PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT_ID', 'story-reader-470101')
-GOOGLE_CLOUD_CREDENTIALS_PATH = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', os.path.join(os.getcwd(), 'story-reader-470101-94cce8baf9f9.json'))
+GOOGLE_CLOUD_CREDENTIALS_PATH = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', os.path.join(os.path.dirname(os.getcwd()), 'googleapi.json'))
+
+# Google Cloud Text-to-Speech configuration
+GOOGLE_CLOUD_TTS_ENABLED = True  # Set to False to disable Google Cloud TTS
 
 # Set Google credentials environment variable if credentials file exists
 if os.path.exists(GOOGLE_CLOUD_CREDENTIALS_PATH):
@@ -292,17 +296,16 @@ def start_camera_fallback():
     return False
 
 def find_available_cameras():
-    """Find available camera devices with enhanced macOS compatibility"""
+    """Find available camera devices for mobile web access"""
     available_devices = []
     
-    # On macOS, try multiple approaches for camera detection
-    print("🔍 Starting enhanced camera device scan...")
+    print("🔍 Starting camera device scan for mobile web access...")
     
-    # Method 1: Try standard device indices with AVFoundation
+    # Simple camera detection for web-based mobile access
     for device_id in [0, 1]:
         try:
-            print(f"🔍 Method 1: Testing device {device_id} with AVFoundation...")
-            test_camera = cv2.VideoCapture(device_id, cv2.CAP_AVFOUNDATION)
+            print(f"🔍 Testing device {device_id}...")
+            test_camera = cv2.VideoCapture(device_id)
             
             if test_camera.isOpened():
                 # Set reasonable camera properties
@@ -315,123 +318,27 @@ def find_available_cameras():
                 import time
                 time.sleep(0.5)
                 
-                # Try to read multiple frames to ensure it's really working
-                frame_count = 0
-                for attempt in range(3):
-                    ret, frame = test_camera.read()
-                    if ret and frame is not None:
-                        frame_count += 1
-                        if frame_count >= 2:  # Need at least 2 successful frames
-                            available_devices.append(device_id)
-                            print(f"✅ Method 1: Found working camera at device {device_id} (Resolution: {frame.shape[1]}x{frame.shape[0]})")
-                            break
-                    else:
-                        print(f"⚠️ Method 1: Device {device_id} frame read attempt {attempt + 1} failed")
-                        time.sleep(0.2)
+                # Try to read a frame to ensure it's working
+                ret, frame = test_camera.read()
+                if ret and frame is not None:
+                    available_devices.append(device_id)
+                    print(f"✅ Found working camera at device {device_id} (Resolution: {frame.shape[1]}x{frame.shape[0]})")
                 
                 test_camera.release()
-                
-                if device_id not in available_devices:
-                    print(f"❌ Method 1: Device {device_id} failed frame validation")
-                    
             else:
-                print(f"❌ Method 1: Device {device_id} could not be opened")
+                print(f"❌ Device {device_id} could not be opened")
                 
         except Exception as e:
-            print(f"❌ Method 1: Error testing device {device_id}: {e}")
+            print(f"❌ Error testing device {device_id}: {e}")
             continue
     
-    # Method 2: Try without specifying backend (let OpenCV choose)
-    if not available_devices:
-        print("🔄 Method 2: Trying without backend specification...")
-        for device_id in [0, 1]:
-            try:
-                print(f"🔍 Method 2: Testing device {device_id} without backend...")
-                test_camera = cv2.VideoCapture(device_id)
-                
-                if test_camera.isOpened():
-                    # Set reasonable camera properties
-                    test_camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                    test_camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-                    test_camera.set(cv2.CAP_PROP_FPS, 30)
-                    test_camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                    
-                    # Warm up the camera
-                    import time
-                    time.sleep(0.5)
-                    
-                    # Try to read multiple frames
-                    frame_count = 0
-                    for attempt in range(3):
-                        ret, frame = test_camera.read()
-                        if ret and frame is not None:
-                            frame_count += 1
-                            if frame_count >= 2:
-                                available_devices.append(device_id)
-                                print(f"✅ Method 2: Found working camera at device {device_id} (Resolution: {frame.shape[1]}x{frame.shape[0]})")
-                                break
-                        else:
-                            print(f"⚠️ Method 2: Device {device_id} frame read attempt {attempt + 1} failed")
-                            time.sleep(0.2)
-                    
-                    test_camera.release()
-                    
-                    if device_id not in available_devices:
-                        print(f"❌ Method 2: Device {device_id} failed frame validation")
-                        
-                else:
-                    print(f"❌ Method 2: Device {device_id} could not be opened")
-                    
-            except Exception as e:
-                print(f"❌ Method 2: Error testing device {device_id}: {e}")
-                continue
-    
-    # Method 3: Try with different resolutions
-    if not available_devices:
-        print("🔄 Method 3: Trying with different resolutions...")
-        for device_id in [0, 1]:
-            try:
-                print(f"🔍 Method 3: Testing device {device_id} with different resolutions...")
-                test_camera = cv2.VideoCapture(device_id)
-                
-                if test_camera.isOpened():
-                    # Try different resolution combinations
-                    resolutions = [(1280, 720), (800, 600), (640, 480), (320, 240)]
-                    
-                    for width, height in resolutions:
-                        test_camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-                        test_camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-                        test_camera.set(cv2.CAP_PROP_FPS, 30)
-                        test_camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                        
-                        time.sleep(0.3)
-                        
-                        ret, frame = test_camera.read()
-                        if ret and frame is not None:
-                            available_devices.append(device_id)
-                            print(f"✅ Method 3: Found working camera at device {device_id} with resolution {width}x{height}")
-                            break
-                    
-                    test_camera.release()
-                    
-                    if device_id not in available_devices:
-                        print(f"❌ Method 3: Device {device_id} failed with all resolutions")
-                        
-                else:
-                    print(f"❌ Method 3: Device {device_id} could not be opened")
-                    
-            except Exception as e:
-                print(f"❌ Method 3: Error testing device {device_id}: {e}")
-                continue
-    
-    print(f"📊 Enhanced camera scan complete: {len(available_devices)} working devices found")
+    print(f"📊 Camera scan complete: {len(available_devices)} working devices found")
     
     if not available_devices:
-        print("💡 Troubleshooting tips:")
-        print("   1. Check System Preferences > Security & Privacy > Camera")
-        print("   2. Close other camera applications (FaceTime, Zoom, etc.)")
-        print("   3. Restart your computer")
-        print("   4. Check if camera is physically connected and working")
+        print("💡 Mobile web access tips:")
+        print("   1. Use your mobile phone's camera through the web interface")
+        print("   2. Ensure you're accessing the app via HTTPS for camera permissions")
+        print("   3. Grant camera permissions when prompted by your browser")
     
     return available_devices
 
@@ -758,13 +665,70 @@ def save_ocr_metadata(image_path, text, ocr_method, processing_time):
         return None
 
 def text_to_speech(text, filename):
-    """Convert text to speech"""
+    """Convert text to speech using Google Cloud TTS or fallback to gTTS"""
+    try:
+        # Try Google Cloud TTS first if enabled
+        if GOOGLE_CLOUD_TTS_ENABLED and os.path.exists(GOOGLE_CLOUD_CREDENTIALS_PATH):
+            return text_to_speech_google_cloud(text, filename)
+        else:
+            # Fallback to gTTS
+            return text_to_speech_gtts(text, filename)
+    except Exception as e:
+        print(f"TTS error: {e}")
+        # Fallback to gTTS if Google Cloud TTS fails
+        return text_to_speech_gtts(text, filename)
+
+def text_to_speech_google_cloud(text, filename):
+    """Convert text to speech using Google Cloud Text-to-Speech"""
+    try:
+        # Initialize the client
+        client = texttospeech.TextToSpeechClient()
+        
+        # Set the text input
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+        
+        # Build the voice request
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US",
+            name="en-US-Wavenet-D",  # High-quality neural voice
+            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL,
+        )
+        
+        # Select the type of audio file you want returned
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3,
+            speaking_rate=1.0,  # Normal speed
+            pitch=0.0,  # Normal pitch
+            volume_gain_db=0.0,  # Normal volume
+        )
+        
+        # Perform the text-to-speech request
+        response = client.synthesize_speech(
+            input=synthesis_input, voice=voice, audio_config=audio_config
+        )
+        
+        # Save the audio file
+        audio_path = os.path.join(AUDIO_FOLDER, f"{filename}.mp3")
+        with open(audio_path, "wb") as out:
+            out.write(response.audio_content)
+            print(f"✅ Google Cloud TTS: Audio content written to {audio_path}")
+        
+        return audio_path
+        
+    except Exception as e:
+        print(f"❌ Google Cloud TTS error: {e}")
+        raise e
+
+def text_to_speech_gtts(text, filename):
+    """Convert text to speech using gTTS (fallback)"""
     try:
         tts = gTTS(text=text, lang='en')
         audio_path = os.path.join(AUDIO_FOLDER, f"{filename}.mp3")
         tts.save(audio_path)
+        print(f"✅ gTTS: Audio content written to {audio_path}")
         return audio_path
     except Exception as e:
+        print(f"❌ gTTS error: {e}")
         return None
 
 def simulate_shutter_sound():
@@ -898,26 +862,24 @@ def troubleshoot_camera():
         
         if permissions_status == 'denied_or_unknown':
             recommendations.append("🔐 Camera permissions may be denied.")
-            recommendations.append("🔐 Go to System Preferences > Security & Privacy > Camera")
-            recommendations.append("🔐 Ensure your terminal/IDE has camera access")
+            recommendations.append("🔐 Check camera permissions in your browser settings")
+            recommendations.append("🔐 Ensure you're accessing via HTTPS for camera access")
         
         if not current_status['camera_opened'] and system_cameras:
             recommendations.append("⚠️ Camera devices found but cannot be opened.")
             recommendations.append("⚠️ Check if another application is using the camera.")
-            recommendations.append("⚠️ Try closing FaceTime, Zoom, or other camera apps.")
-            recommendations.append("⚠️ Restart camera services: sudo killall VDCAssistant")
+            recommendations.append("⚠️ Try closing other camera apps.")
         
         if not current_status['startup_successful']:
             recommendations.append("❌ Camera startup failed after multiple attempts.")
             recommendations.append("❌ Try restarting your computer to reset camera state.")
-            recommendations.append("❌ Check System Preferences > Security & Privacy > Camera permissions.")
-            recommendations.append("❌ Try different camera backends (AVFoundation, Auto-detect)")
+            recommendations.append("❌ Check camera permissions in your browser.")
+            recommendations.append("❌ Ensure you're using HTTPS for camera access.")
         
-        # Add system-specific recommendations
-        if 'darwin' in os.uname().sysname.lower():
-            recommendations.append("🍎 macOS specific: Check Continuity Camera settings")
-            recommendations.append("🍎 macOS specific: Ensure no other apps are using camera")
-            recommendations.append("🍎 macOS specific: Try restarting camera services")
+        # Add mobile-specific recommendations
+        recommendations.append("📱 Mobile access: Use your phone's camera through the web interface")
+        recommendations.append("📱 Mobile access: Grant camera permissions when prompted by your browser")
+        recommendations.append("📱 Mobile access: Ensure you're accessing via HTTPS for camera access")
         
         return jsonify({
             'success': True,
@@ -1070,68 +1032,41 @@ def test_camera_frame():
         }), 500
 
 def check_camera_permissions():
-    """Check camera permissions (macOS specific)"""
+    """Check camera permissions for mobile web access"""
     try:
-        if 'darwin' in os.uname().sysname.lower():
-            print("🔐 Checking macOS camera permissions...")
-            
-            # Method 1: Try to open camera directly
-            try:
-                test_cam = cv2.VideoCapture(0)
-                if test_cam.isOpened():
-                    test_cam.release()
-                    print("✅ Camera access appears to be granted")
-                    return 'granted'
-                else:
-                    print("⚠️ Camera could not be opened - may be permission issue")
-                    return 'denied_or_unknown'
-            except Exception as e:
-                print(f"❌ Camera access test failed: {e}")
+        print("🔐 Checking camera permissions for mobile web access...")
+        
+        # Try to open camera directly
+        try:
+            test_cam = cv2.VideoCapture(0)
+            if test_cam.isOpened():
+                test_cam.release()
+                print("✅ Camera access appears to be granted")
+                return 'granted'
+            else:
+                print("⚠️ Camera could not be opened - may be permission issue")
                 return 'denied_or_unknown'
-        else:
-            return 'unknown_platform'
+        except Exception as e:
+            print(f"❌ Camera access test failed: {e}")
+            return 'denied_or_unknown'
     except Exception:
         return 'unknown'
 
 def check_system_camera_status():
-    """Check system-level camera status and provide troubleshooting info"""
+    """Check system-level camera status for mobile web access"""
     try:
-        if 'darwin' in os.uname().sysname.lower():
-            print("🔍 Checking macOS camera system status...")
-            
-            # Check if camera processes are running
-            import subprocess
-            try:
-                result = subprocess.run(['pgrep', '-f', 'VDCAssistant'], capture_output=True, text=True)
-                if result.returncode == 0:
-                    print("✅ VDCAssistant process is running")
-                else:
-                    print("⚠️ VDCAssistant process not found")
-                    
-                result = subprocess.run(['pgrep', '-f', 'AppleCameraAssistant'], capture_output=True, text=True)
-                if result.returncode == 0:
-                    print("✅ AppleCameraAssistant process is running")
-                else:
-                    print("⚠️ AppleCameraAssistant process not found")
-                    
-            except Exception as e:
-                print(f"⚠️ Could not check camera processes: {e}")
-            
-            # Check camera hardware
-            try:
-                result = subprocess.run(['system_profiler', 'SPCameraDataType'], capture_output=True, text=True)
-                if result.returncode == 0:
-                    if 'Camera' in result.stdout:
-                        print("✅ Camera hardware detected by system")
-                    else:
-                        print("⚠️ No camera hardware detected by system")
-                else:
-                    print("⚠️ Could not query camera hardware info")
-            except Exception as e:
-                print(f"⚠️ Could not check camera hardware: {e}")
-                
-        else:
-            print("🔍 Platform not supported for detailed camera status check")
+        print("🔍 Checking camera system status for mobile web access...")
+        
+        # Simple camera hardware check
+        try:
+            test_cam = cv2.VideoCapture(0)
+            if test_cam.isOpened():
+                print("✅ Camera hardware detected and accessible")
+                test_cam.release()
+            else:
+                print("⚠️ Camera hardware not accessible")
+        except Exception as e:
+            print(f"⚠️ Could not check camera hardware: {e}")
             
     except Exception as e:
         print(f"❌ Error checking system camera status: {e}")
@@ -1184,7 +1119,7 @@ def camera_status():
         
         # Add system information
         status_data['system_info'] = {
-            'platform': 'macOS' if 'darwin' in os.uname().sysname.lower() else 'Other',
+            'platform': 'Mobile Web Access',
             'opencv_version': cv2.__version__,
             'camera_detection': len(available_devices) > 0
         }
@@ -1622,6 +1557,24 @@ def get_ocr_info():
             else:
                 google_vision_error = "No credentials path configured"
         
+        # Check Google Cloud TTS availability
+        google_tts_available = False
+        google_tts_error = None
+        
+        if GOOGLE_CLOUD_TTS_ENABLED:
+            if GOOGLE_CLOUD_CREDENTIALS_PATH:
+                if os.path.exists(GOOGLE_CLOUD_CREDENTIALS_PATH):
+                    try:
+                        # Test Google Cloud TTS client initialization
+                        client = texttospeech.TextToSpeechClient()
+                        google_tts_available = True
+                    except Exception as e:
+                        google_tts_error = str(e)
+                else:
+                    google_tts_error = "Credentials file not found"
+            else:
+                google_tts_error = "No credentials path configured"
+
         ocr_info = {
             'success': True,
             'ocr_systems': {
@@ -1633,7 +1586,22 @@ def get_ocr_info():
                     'priority': 'primary' if google_vision_available else 'unavailable'
                 }
             },
+            'tts_systems': {
+                'google_cloud_tts': {
+                    'enabled': GOOGLE_CLOUD_TTS_ENABLED,
+                    'available': google_tts_available,
+                    'credentials_path': GOOGLE_CLOUD_CREDENTIALS_PATH,
+                    'error': google_tts_error,
+                    'priority': 'primary' if google_tts_available else 'fallback_to_gtts'
+                },
+                'gtts': {
+                    'enabled': True,
+                    'available': True,
+                    'priority': 'fallback'
+                }
+            },
             'recommended_method': 'google_cloud_vision' if google_vision_available else 'none',
+            'recommended_tts': 'google_cloud_tts' if google_tts_available else 'gtts',
             'timestamp': datetime.now().isoformat()
         }
         

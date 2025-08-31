@@ -45,11 +45,92 @@
             opacity: 0.9;
         }
 
+        /* Mobile header optimization */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+                margin-bottom: 8px;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+                margin-bottom: 6px;
+            }
+            
+            .header p {
+                font-size: 0.9em;
+            }
+        }
+
         .main-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
             padding: 30px;
+        }
+
+        /* Mobile-first responsive design */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+        }
+
+        /* Cell phone optimization - small screens */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+                font-size: 14px;
+            }
+            
+            .container {
+                margin: 0;
+                border-radius: 8px;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+            
+            .main-content {
+                padding: 10px;
+                gap: 15px;
+            }
+            
+            .camera-section, .files-section {
+                padding: 12px;
+                border-radius: 8px;
+            }
+        }
+
+        /* Very small phones (320px-375px) */
+        @media (max-width: 375px) {
+            body {
+                padding: 3px;
+                font-size: 13px;
+            }
+            
+            .main-content {
+                padding: 8px;
+                gap: 12px;
+            }
+            
+            .camera-section, .files-section {
+                padding: 10px;
+            }
         }
 
         .camera-section {
@@ -71,13 +152,105 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: #000;
+        }
+
+        .video-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            z-index: 1;
+        }
+
+        .video-placeholder.hidden {
+            display: none;
+        }
+
+        .video-resolution {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-family: monospace;
+            z-index: 10;
+        }
+
+        .placeholder-content {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .placeholder-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .placeholder-text {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .placeholder-subtext {
+            font-size: 0.9em;
+            opacity: 0.8;
         }
 
         #videoElement {
             width: 100%;
-            height: 300px;
+            height: auto;
+            min-height: 200px;
+            max-height: 500px;
             background: #000;
             border-radius: 10px;
+            display: block;
+            object-fit: contain;
+            aspect-ratio: 16/9;
+        }
+
+        /* Mobile video optimization */
+        @media (max-width: 768px) {
+            #videoElement {
+                min-height: 180px;
+                max-height: 400px;
+                border-radius: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #videoElement {
+                min-height: 150px;
+                max-height: 300px;
+                border-radius: 6px;
+            }
+            
+            .video-container {
+                margin-bottom: 15px;
+            }
+        }
+
+        @media (max-width: 375px) {
+            #videoElement {
+                min-height: 120px;
+                max-height: 250px;
+                border-radius: 4px;
+            }
+            
+            .video-container {
+                margin-bottom: 12px;
+            }
         }
 
         .camera-controls {
@@ -86,6 +259,51 @@
             justify-content: center;
             margin-bottom: 20px;
             flex-wrap: wrap;
+        }
+
+        /* Mobile-optimized camera controls */
+        @media (max-width: 768px) {
+            .camera-controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+            
+            .camera-controls .btn {
+                width: 100%;
+                max-width: 280px;
+                padding: 16px 20px;
+                font-size: 1.1em;
+            }
+        }
+
+        /* Cell phone camera controls */
+        @media (max-width: 480px) {
+            .camera-controls {
+                gap: 10px;
+                margin-bottom: 12px;
+            }
+            
+            .camera-controls .btn {
+                max-width: 100%;
+                padding: 14px 18px;
+                font-size: 1em;
+                min-height: 44px;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .camera-controls {
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+            
+            .camera-controls .btn {
+                padding: 12px 16px;
+                font-size: 0.95em;
+                min-height: 42px;
+            }
         }
 
         .btn {
@@ -174,6 +392,33 @@
             margin-bottom: 10px;
         }
 
+        /* Cell phone OCR info optimization */
+        @media (max-width: 480px) {
+            .ocr-info {
+                padding: 12px;
+                margin-bottom: 15px;
+                border-radius: 6px;
+            }
+            
+            .ocr-info h3 {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .ocr-info {
+                padding: 10px;
+                margin-bottom: 12px;
+                border-radius: 4px;
+            }
+            
+            .ocr-info h3 {
+                font-size: 1em;
+                margin-bottom: 6px;
+            }
+        }
+
         .ocr-status {
             font-size: 0.9em;
         }
@@ -234,6 +479,37 @@
         .file-list {
             max-height: 400px;
             overflow-y: auto;
+        }
+
+        /* Mobile files section optimization */
+        @media (max-width: 768px) {
+            .files-section {
+                padding: 15px;
+            }
+            
+            .files-section h2 {
+                font-size: 1.3em;
+                margin-bottom: 15px;
+            }
+            
+            .file-list {
+                max-height: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .files-section {
+                padding: 12px;
+            }
+            
+            .files-section h2 {
+                font-size: 1.2em;
+                margin-bottom: 12px;
+            }
+            
+            .file-list {
+                max-height: 250px;
+            }
         }
 
         .file-item {
@@ -303,6 +579,34 @@
         .status-audio {
             background: #fff3e0;
             color: #f57c00;
+        }
+
+        /* TTS Button Styles */
+        #ttsPlayBtn {
+            background: #4caf50;
+            border-color: #4caf50;
+        }
+
+        #ttsPlayBtn:hover {
+            background: #45a049;
+            border-color: #45a049;
+        }
+
+        #ttsStopBtn {
+            background: #ff9800;
+            border-color: #ff9800;
+            color: white;
+        }
+
+        #ttsStopBtn:hover {
+            background: #f57c00;
+            border-color: #f57c00;
+        }
+
+        #ttsStopBtn:disabled {
+            background: #ccc;
+            border-color: #ccc;
+            cursor: not-allowed;
         }
 
         .status-ocr {
@@ -874,6 +1178,43 @@
             display: none;
         }
 
+        /* Cell phone mobile camera info optimization */
+        @media (max-width: 480px) {
+            .mobile-camera-info {
+                padding: 12px;
+                margin-bottom: 15px;
+                border-radius: 6px;
+            }
+            
+            .mobile-camera-info h3 {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+            
+            .mobile-camera-info li {
+                font-size: 0.9em;
+                padding: 3px 0;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .mobile-camera-info {
+                padding: 10px;
+                margin-bottom: 12px;
+                border-radius: 4px;
+            }
+            
+            .mobile-camera-info h3 {
+                font-size: 1em;
+                margin-bottom: 6px;
+            }
+            
+            .mobile-camera-info li {
+                font-size: 0.85em;
+                padding: 2px 0;
+            }
+        }
+
         .mobile-camera-info.show {
             display: block;
         }
@@ -975,6 +1316,42 @@
             font-weight: 700;
             border-radius: 20px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Cell phone quick actions optimization */
+        @media (max-width: 480px) {
+            .mobile-capture-btn, .mobile-ocr-btn {
+                padding: 16px;
+                font-size: 1.1em;
+                border-radius: 15px;
+                min-height: 48px;
+            }
+            
+            .mobile-quick-actions {
+                padding: 10px;
+                margin-top: 10px;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .mobile-capture-btn, .mobile-ocr-btn {
+                padding: 14px;
+                font-size: 1em;
+                border-radius: 12px;
+                min-height: 44px;
+            }
+            
+            .mobile-quick-actions {
+                padding: 8px;
+                margin-top: 8px;
+            }
+            
+            /* TTS buttons on very small screens */
+            #ttsPlayBtn, #ttsStopBtn {
+                padding: 8px 12px;
+                font-size: 12px;
+                min-height: 36px;
+            }
         }
 
         .mobile-capture-btn {
@@ -1104,6 +1481,16 @@
 
                 <div class="video-container">
                     <video id="videoElement" autoplay muted playsinline alt="Camera feed will appear here"></video>
+                    <div id="videoPlaceholder" class="video-placeholder">
+                        <div class="placeholder-content">
+                            <div class="placeholder-icon">📷</div>
+                            <div class="placeholder-text">Camera feed will appear here</div>
+                            <div class="placeholder-subtext">Click "Start Mobile Camera" to begin</div>
+                        </div>
+                    </div>
+                    <div id="videoResolution" class="video-resolution" style="display: none;">
+                        <span id="resolutionText">Resolution: -</span>
+                    </div>
                     <canvas id="mobileCanvas" style="display: none;"></canvas>
                 </div>
 
@@ -1156,7 +1543,8 @@
                         </div>
                         <div class="ocr-actions">
                             <button class="btn btn-primary" onclick="copyOcrText()">📋 Copy Text</button>
-                            <button class="btn btn-success" onclick="textToSpeech()">🔊 Text to Speech</button>
+                            <button class="btn btn-success" id="ttsPlayBtn" onclick="textToSpeech()">🔊 Text to Speech</button>
+                            <button class="btn btn-warning" id="ttsStopBtn" onclick="stopTTS()" style="display: none;">⏹️ Stop Audio</button>
                             <button class="btn btn-info" onclick="clearOcrResults()">🗑️ Clear Results</button>
                         </div>
                     </div>
@@ -1184,7 +1572,8 @@
                         </div>
                         <div class="ocr-actions">
                             <button class="btn btn-primary" onclick="copyOcrText()">📋 Copy Text</button>
-                            <button class="btn btn-success" onclick="textToSpeech()">🔊 Text to Speech</button>
+                            <button class="btn btn-success" id="ttsPlayBtn" onclick="textToSpeech()">🔊 Text to Speech</button>
+                            <button class="btn btn-warning" id="ttsStopBtn" onclick="stopTTS()" style="display: none;">⏹️ Stop Audio</button>
                             <button class="btn btn-info" onclick="clearOcrResults()">🗑️ Clear Results</button>
                         </div>
                     </div>
@@ -1240,6 +1629,10 @@
         let captureInProgress = false;
         let isMobileDevice = false;
         let mobileStream = null;
+        
+        // TTS Audio Control
+        let currentAudio = null;
+        let isTTSPlaying = false;
 
         // DOM elements
         const videoElement = document.getElementById('videoElement');
@@ -1257,6 +1650,13 @@
         captureBtn.addEventListener('click', captureImage);
         document.addEventListener('keydown', handleKeyPress);
         videoElement.addEventListener('click', captureImage);
+        
+        // Add window resize listener to readjust video size
+        window.addEventListener('resize', () => {
+            if (cameraActive && videoElement.videoWidth && videoElement.videoHeight) {
+                adjustVideoSize();
+            }
+        });
         
         // Detect mobile device
         function detectMobileDevice() {
@@ -1316,18 +1716,139 @@
             }
         }
 
-        // Start camera with hybrid approach
+        // Start camera - mobile only approach
         async function startCamera() {
             try {
-                if (isMobileDevice) {
-                    // Try mobile camera first, fallback to server camera
-                    await startMobileCameraWithFallback();
-                } else {
-                    // Use desktop camera via server
-                    await startDesktopCamera();
-                }
+                // Always try mobile camera first (works on both mobile and desktop)
+                await startMobileCamera();
             } catch (error) {
                 showNotification('Error starting camera: ' + error.message, 'error');
+                console.error('Camera start error:', error);
+            }
+        }
+
+        // Start mobile camera (simplified version)
+        async function startMobileCamera() {
+            try {
+                console.log('📱 Starting mobile camera...');
+                
+                // Check if camera access is allowed
+                const accessCheck = isCameraAccessAllowed();
+                
+                if (!accessCheck.allowed) {
+                    const message = 'Camera access requires HTTPS. Please access this site via HTTPS.';
+                    showNotification(message, 'error');
+                    updateCameraModeIndicator('mobile', 'HTTPS Required');
+                    updateMobileCameraStatus('https', 'insecure', 'HTTPS Required');
+                    return false;
+                }
+                
+                // Check browser support
+                const support = checkGetUserMediaSupport();
+                if (support === 'unsupported') {
+                    console.log('getUserMedia not supported');
+                    updateCameraModeIndicator('mobile', 'Not Supported');
+                    updateMobileCameraStatus('camera', 'insecure', 'Not Supported');
+                    return false;
+                }
+                
+                updateCameraModeIndicator('mobile', 'Requesting Access...');
+                updateMobileCameraStatus('camera', 'checking', 'Requesting...');
+                
+                // Try to get camera access with better error handling
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280, min: 640 },
+                        height: { ideal: 720, min: 480 }
+                    },
+                    audio: false
+                };
+                
+                try {
+                    mobileStream = await getUserMediaWithFallback(constraints);
+                } catch (error) {
+                    console.log('Primary constraints failed, trying fallback...');
+                    updateCameraModeIndicator('mobile', 'Retrying...');
+                    
+                    // Try with simpler constraints
+                    const fallbackConstraints = {
+                        video: {
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        },
+                        audio: false
+                    };
+                    
+                    try {
+                        mobileStream = await getUserMediaWithFallback(fallbackConstraints);
+                    } catch (fallbackError) {
+                        console.log('Fallback constraints failed, trying basic...');
+                        
+                        // Try with basic constraints
+                        const basicConstraints = {
+                            video: true,
+                            audio: false
+                        };
+                        
+                        mobileStream = await getUserMediaWithFallback(basicConstraints);
+                    }
+                }
+                
+                // Set the video source
+                videoElement.srcObject = mobileStream;
+                videoElement.play();
+                
+                // Adjust video size to match stream dimensions
+                videoElement.addEventListener('loadedmetadata', adjustVideoSize);
+                
+                // Hide placeholder when video starts
+                const placeholder = document.getElementById('videoPlaceholder');
+                if (placeholder) {
+                    placeholder.classList.add('hidden');
+                }
+                
+                // Wait for video to be ready
+                await new Promise((resolve, reject) => {
+                    videoElement.onloadedmetadata = () => {
+                        console.log('✅ Video metadata loaded');
+                        resolve();
+                    };
+                    videoElement.onerror = reject;
+                    setTimeout(reject, 5000); // 5 second timeout
+                });
+                
+                cameraActive = true;
+                startCameraBtn.disabled = true;
+                stopCameraBtn.disabled = false;
+                captureBtn.disabled = false;
+                document.getElementById('ocrBtn').disabled = false;
+                
+                // Enable mobile quick actions
+                const mobileQuickActions = document.getElementById('mobileQuickActions');
+                if (mobileQuickActions) {
+                    mobileQuickActions.style.display = 'block';
+                }
+                
+                // Hide test frame button for mobile
+                document.getElementById('testFrameBtn').style.display = 'none';
+                
+                updateCameraModeIndicator('mobile', 'Active');
+                updateMobileCameraStatus('camera', 'secure', 'Active');
+                updateMobileCameraStatus('browser', 'secure', 'Supported');
+                updateMobileCameraStatus('https', 'secure', 'Secure');
+                showNotification('Mobile camera started successfully!', 'success');
+                
+                console.log('✅ Mobile camera started successfully');
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Mobile camera start failed:', error);
+                updateCameraModeIndicator('mobile', 'Failed');
+                updateMobileCameraStatus('camera', 'insecure', 'Failed: ' + error.message);
+                showNotification('Failed to start mobile camera: ' + error.message, 'error');
+                
+                return false;
             }
         }
 
@@ -1350,6 +1871,12 @@
                     // Start video stream
                     videoElement.src = '/api/stream';
                     videoElement.load();
+                    
+                    // Hide placeholder when video starts
+                    const placeholder = document.getElementById('videoPlaceholder');
+                    if (placeholder) {
+                        placeholder.classList.add('hidden');
+                    }
                     
                     videoElement.onloadedmetadata = () => {
                         updateCameraModeIndicator('desktop', 'Active');
@@ -1441,6 +1968,15 @@
             }
         }
 
+        // Update mobile camera status indicators
+        function updateMobileCameraStatus(type, status, message) {
+            const statusElement = document.getElementById(type + 'Status');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.className = 'status-value ' + status;
+            }
+        }
+
         // Try mobile camera access
         async function tryMobileCamera() {
             try {
@@ -1493,6 +2029,9 @@
                 // Set the video source
                 videoElement.srcObject = mobileStream;
                 videoElement.play();
+                
+                // Adjust video size to match stream dimensions
+                videoElement.addEventListener('loadedmetadata', adjustVideoSize);
                 
                 cameraActive = true;
                 startCameraBtn.disabled = true;
@@ -1620,6 +2159,12 @@
                     mobileStream = null;
                     videoElement.srcObject = null;
                     
+                    // Show placeholder when camera stops
+                    const placeholder = document.getElementById('videoPlaceholder');
+                    if (placeholder) {
+                        placeholder.classList.remove('hidden');
+                    }
+                    
                     cameraActive = false;
                     startCameraBtn.disabled = false;
                     stopCameraBtn.disabled = true;
@@ -1640,6 +2185,12 @@
                     // Stop desktop camera
                     const response = await fetch('/api/camera/stop', { method: 'POST' });
                     const data = await response.json();
+                    
+                    // Show placeholder when camera stops
+                    const placeholder = document.getElementById('videoPlaceholder');
+                    if (placeholder) {
+                        placeholder.classList.remove('hidden');
+                    }
                     
                     cameraActive = false;
                     startCameraBtn.disabled = false;
@@ -1709,17 +2260,19 @@
         // Capture image from mobile camera
         async function captureMobileImage() {
             try {
-                // Get video dimensions
+                // Get video dimensions (use actual video stream dimensions)
                 const videoWidth = videoElement.videoWidth;
                 const videoHeight = videoElement.videoHeight;
                 
-                // Set canvas dimensions to match video
+                // Set canvas dimensions to match video stream exactly
                 mobileCanvas.width = videoWidth;
                 mobileCanvas.height = videoHeight;
                 
-                // Draw current video frame to canvas
+                // Draw current video frame to canvas with exact dimensions
                 const ctx = mobileCanvas.getContext('2d');
                 ctx.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
+                
+                console.log(`Capturing image: ${videoWidth}x${videoHeight} (exact video stream dimensions)`);
                 
                 // Convert canvas to blob
                 const blob = await new Promise(resolve => {
@@ -1838,27 +2391,7 @@
             }
         }
 
-        // Text to speech for OCR results
-        function textToSpeech() {
-            const ocrTextDisplay = document.getElementById('ocrTextDisplay');
-            const text = ocrTextDisplay.textContent || ocrTextDisplay.innerText;
-            
-            if (text && text !== 'No OCR results yet. Click the OCR button to extract text from the last captured image.' && 
-                text !== 'No OCR results yet. Click the OCR button on a captured image to extract text.') {
-                // Use browser's built-in speech synthesis
-                if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 0.9;
-                    utterance.pitch = 1;
-                    speechSynthesis.speak(utterance);
-                    showNotification('Text-to-speech started!', 'success');
-                } else {
-                    showNotification('Speech synthesis not supported in this browser', 'error');
-                }
-            } else {
-                showNotification('No text to speak', 'error');
-            }
-        }
+
 
         // Clear OCR results
         function clearOcrResults() {
@@ -2131,15 +2664,27 @@
             }
         }
 
-        // Convert OCR text to speech
+        // Convert OCR text to speech using Google Cloud TTS
         async function textToSpeech() {
+            // If already playing, don't start another
+            if (isTTSPlaying) {
+                showNotification('🎵 Audio is already playing. Use stop button to stop.', 'info');
+                return;
+            }
+            
             const ocrTextDisplay = document.getElementById('ocrTextDisplay');
             const textContent = ocrTextDisplay.textContent || ocrTextDisplay.innerText;
             
+            // Check if there's valid text to convert
             if (textContent && textContent !== 'No OCR results yet. Click the OCR button on a captured image to extract text.' && 
                 textContent !== 'No text was extracted from this image.' && !textContent.includes('Processing OCR...')) {
+                
+                // Show loading notification and update UI
+                showNotification('Converting text to speech...', 'info');
+                updateTTSButtons(true);
+                
                 try {
-                    // Use the existing TTS functionality
+                    // Use Google Cloud TTS API
                     const response = await fetch('/api/tts/text', { 
                         method: 'POST',
                         headers: {
@@ -2150,20 +2695,159 @@
                     
                     const data = await response.json();
                     if (data.success) {
-                        showNotification('Text-to-speech completed!', 'success');
+                        showNotification('🎵 Text-to-speech completed! Playing audio...', 'success');
+                        
+                        // Play the audio file with controls
+                        if (data.audio_file) {
+                            await playTTSAudio(data.audio_file);
+                        }
                     } else {
-                        showNotification('TTS failed: ' + data.message, 'error');
+                        showNotification('❌ TTS failed: ' + data.message, 'error');
+                        updateTTSButtons(false);
                     }
                 } catch (error) {
-                    showNotification('Error converting text to speech: ' + error.message, 'error');
+                    console.error('TTS Error:', error);
+                    showNotification('❌ Error converting text to speech: ' + error.message, 'error');
+                    updateTTSButtons(false);
                 }
             } else {
-                showNotification('No text to convert to speech', 'info');
+                showNotification('ℹ️ No text to convert to speech. Please perform OCR first.', 'info');
             }
+        }
+
+        // Play TTS audio with controls
+        async function playTTSAudio(audioFile) {
+            try {
+                // Stop any currently playing audio
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+                
+                const audioUrl = `/api/files/${audioFile}`;
+                currentAudio = new Audio(audioUrl);
+                isTTSPlaying = true;
+                
+                // Set up event listeners
+                currentAudio.addEventListener('ended', () => {
+                    console.log('Audio playback finished');
+                    isTTSPlaying = false;
+                    updateTTSButtons(false);
+                    showNotification('🎵 Audio playback completed', 'success');
+                });
+                
+                currentAudio.addEventListener('error', (e) => {
+                    console.error('Audio playback error:', e);
+                    isTTSPlaying = false;
+                    updateTTSButtons(false);
+                    showNotification('❌ Audio playback failed', 'error');
+                });
+                
+                currentAudio.addEventListener('pause', () => {
+                    console.log('Audio playback paused');
+                    isTTSPlaying = false;
+                    updateTTSButtons(false);
+                });
+                
+                // Start playing
+                await currentAudio.play();
+                showNotification('🎵 Audio is now playing...', 'success');
+                
+            } catch (error) {
+                console.error('Audio play error:', error);
+                isTTSPlaying = false;
+                updateTTSButtons(false);
+                showNotification('❌ Could not play audio: ' + error.message, 'error');
+            }
+        }
+
+        // Stop TTS audio
+        function stopTTS() {
+            if (currentAudio && isTTSPlaying) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0; // Reset to beginning
+                isTTSPlaying = false;
+                updateTTSButtons(false);
+                showNotification('⏹️ Audio stopped', 'info');
+            }
+        }
+
+        // Update TTS button states
+        function updateTTSButtons(isPlaying) {
+            const playBtn = document.getElementById('ttsPlayBtn');
+            const stopBtn = document.getElementById('ttsStopBtn');
+            
+            if (isPlaying) {
+                playBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                playBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else {
+                playBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                playBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+
+        // Adjust video size to match actual stream dimensions
+        function adjustVideoSize() {
+            const video = videoElement;
+            if (video.videoWidth && video.videoHeight) {
+                const videoAspectRatio = video.videoWidth / video.videoHeight;
+                const containerWidth = video.parentElement.clientWidth;
+                
+                // Calculate optimal height based on video aspect ratio
+                let optimalHeight = containerWidth / videoAspectRatio;
+                
+                // Apply min/max height constraints
+                const minHeight = window.innerWidth <= 375 ? 120 : 
+                                 window.innerWidth <= 480 ? 150 : 
+                                 window.innerWidth <= 768 ? 180 : 200;
+                const maxHeight = window.innerWidth <= 375 ? 250 : 
+                                 window.innerWidth <= 480 ? 300 : 
+                                 window.innerWidth <= 768 ? 400 : 500;
+                
+                optimalHeight = Math.max(minHeight, Math.min(optimalHeight, maxHeight));
+                
+                // Set the video height
+                video.style.height = optimalHeight + 'px';
+                video.style.aspectRatio = 'unset'; // Override CSS aspect-ratio
+                
+                console.log(`Video adjusted: ${video.videoWidth}x${video.videoHeight} -> ${containerWidth}x${optimalHeight}`);
+                
+                // Update capture info if available
+                updateVideoInfo(video.videoWidth, video.videoHeight);
+            }
+        }
+
+        // Update video information display
+        function updateVideoInfo(width, height) {
+            // Update the resolution indicator
+            const resolutionElement = document.getElementById('videoResolution');
+            const resolutionText = document.getElementById('resolutionText');
+            
+            if (resolutionElement && resolutionText) {
+                resolutionText.textContent = `Resolution: ${width} × ${height}`;
+                resolutionElement.style.display = 'block';
+            }
+            
+            // Try to find and update other video info elements
+            const videoInfoElements = document.querySelectorAll('.video-info, .camera-info');
+            videoInfoElements.forEach(element => {
+                if (element.textContent.includes('Resolution') || element.textContent.includes('Size')) {
+                    element.textContent = `Resolution: ${width} × ${height}`;
+                }
+            });
         }
 
         // Clear OCR results
         function clearOcrResults() {
+            // Stop any playing audio
+            if (isTTSPlaying) {
+                stopTTS();
+            }
+            
             const ocrResultsSection = document.getElementById('ocrResultsSection');
             const ocrTextDisplay = document.getElementById('ocrTextDisplay');
             const ocrImagePreview = document.getElementById('ocrImagePreview');
